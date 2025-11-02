@@ -252,6 +252,15 @@ gtext refresh
 
 # Dry run (preview without writing)
 gtext render document.md.gtext --dry-run
+
+# Live preview server (auto-refresh on file changes)
+gtext serve document.md.gtext
+gtext serve document.md.gtext --port 8000
+```
+
+**Note**: The `serve` command requires installing the optional dependency:
+```bash
+pip install 'gtext[serve]'
 ```
 
 ---
