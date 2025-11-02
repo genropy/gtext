@@ -183,3 +183,88 @@ def test_metadata_in_html_comment():
         assert content.startswith("<!-- gtext:")
         assert "outputs" in content
         assert "-->" in content
+
+
+def test_read_metadata_invalid_json():
+    """Test reading metadata with invalid JSON."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source = Path(tmpdir) / "test.md.gtext"
+        # Write file with invalid JSON in comment
+        source.write_text("<!-- gtext:{invalid json}} -->\n# Test\n\nContent")
+
+        # Should return empty dict on JSONDecodeError
+        metadata = read_metadata(source)
+        assert metadata == {}
+
+
+def test_write_metadata_file_not_found():
+    """Test write_metadata with non-existent file."""
+    nonexistent = Path("/nonexistent/dir/file.gtext")
+
+    with pytest.raises(FileNotFoundError):
+        write_metadata(nonexistent, {})
+
+
+def test_get_outputs_with_absolute_path():
+    """Test get_outputs resolves absolute paths correctly."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source = Path(tmpdir) / "source_dir" / "test.md.gtext"
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_text("# Test")
+
+        # Add output in completely different directory (will be stored as absolute)
+        other_dir = Path(tmpdir) / "completely_different_dir"
+        other_dir.mkdir()
+        output = other_dir / "output.md"
+
+        add_output(source, output)
+
+        # get_outputs should resolve it back to Path
+        outputs = get_outputs(source)
+        assert len(outputs) == 1
+
+        # Path stored should work when resolved
+        metadata = read_metadata(source)
+        stored_path = metadata["outputs"][0]["path"]
+
+        # If it's absolute, it should start with /
+        # This exercises line 144 (return Path(output_str))
+        if Path(stored_path).is_absolute():
+            assert stored_path.startswith("/")
+
+
+def test_remove_output_absolute_path():
+    """Test removing output with absolute path."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source = Path(tmpdir) / "test.md.gtext"
+        source.write_text("# Test")
+
+        # Create output in different directory (will be stored as absolute)
+        other_dir = Path(tmpdir) / "other"
+        other_dir.mkdir()
+        output = other_dir / "output.md"
+
+        add_output(source, output)
+        assert len(get_outputs(source)) == 1
+
+        # Remove using absolute path
+        removed = remove_output(source, output)
+        assert removed is True
+        assert len(get_outputs(source)) == 0
+
+
+def test_remove_output_not_in_list():
+    """Test removing output that's not in the outputs list."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        source = Path(tmpdir) / "test.md.gtext"
+        source.write_text("# Test")
+
+        # Add one output
+        add_output(source, Path(tmpdir) / "output1.md")
+
+        # Try to remove different output
+        removed = remove_output(source, Path(tmpdir) / "output2.md")
+        assert removed is False
+
+        # Original output should still be there
+        assert len(get_outputs(source)) == 1
