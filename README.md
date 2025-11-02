@@ -82,10 +82,24 @@ glob: projects/**/README.md
 
 ```bash
 # Auto-detect output (strip .gtext extension)
-gtext cast report.md.gtext
+gtext render report.md.gtext
 
-# Or specify explicit output
-gtext cast report.md.gtext -o report.md
+# Or specify output file/directory
+gtext render report.md.gtext report.md
+gtext render report.md.gtext output/
+
+# Process multiple files or patterns
+gtext render "docs/**/*.gtext" output/
+```
+
+**Re-render after changes (using saved metadata):**
+
+```bash
+# Modify report.md.gtext, then refresh
+gtext refresh report.md.gtext
+
+# Or refresh all .gtext files with saved outputs
+gtext refresh
 ```
 
 **Result (`report.md`):**
@@ -108,6 +122,8 @@ gtext cast report.md.gtext -o report.md
 
 [all README.md files from projects/**/]
 ```
+
+> **🆕 New in v0.2.0**: The `render` command now intelligently handles single files, multiple files, and patterns. The old `cast` and `cast-all` commands are deprecated (but still work) and will be removed in v0.3.0.
 
 ---
 
