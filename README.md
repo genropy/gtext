@@ -8,7 +8,7 @@
 
 </div>
 
-[![PyPI version](https://badge.fury.io/py/gtext.svg)](https://badge.fury.io/py/gtext)
+[![PyPI version](https://img.shields.io/pypi/v/gtext.svg)](https://pypi.org/project/gtext/)
 [![Tests](https://github.com/genropy/gtext/actions/workflows/test.yml/badge.svg)](https://github.com/genropy/gtext/actions/workflows/test.yml)
 [![codecov](https://codecov.io/gh/genropy/gtext/branch/main/graph/badge.svg)](https://codecov.io/gh/genropy/gtext)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
