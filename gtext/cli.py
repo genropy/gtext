@@ -121,19 +121,6 @@ def render_command(args) -> int:
         return 1
 
 
-def cast_command(args) -> int:
-    """DEPRECATED: Use 'render' instead. Kept for backwards compatibility.
-
-    This is an alias to render_command and will be removed in v0.3.0.
-    """
-    print("WARNING: 'cast' is deprecated, use 'render' instead", file=sys.stderr)
-    # Convert old args format to new format
-    args.inputs = [args.input]
-    if hasattr(args, 'output') and args.output:
-        args.inputs.append(args.output)  # Will be detected as output by render_command
-    return render_command(args)
-
-
 def refresh_command(args) -> int:
     """Execute the refresh command (re-render using saved metadata).
 
@@ -251,18 +238,6 @@ def refresh_command(args) -> int:
     except Exception as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
-
-
-def cast_all_command(args) -> int:
-    """DEPRECATED: Use 'render' instead. Kept for backwards compatibility.
-
-    This is an alias to render_command and will be removed in v0.3.0.
-    """
-    print("WARNING: 'cast-all' is deprecated, use 'render' instead", file=sys.stderr)
-    # Convert args.patterns to args.inputs for render_command
-    args.inputs = args.patterns
-    args.output_arg = None
-    return render_command(args)
 
 
 def apikey_command(args) -> int:
@@ -438,24 +413,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Refresh all saved outputs (skip interactive choice for multiple outputs)"
     )
     refresh_parser.set_defaults(func=refresh_command)
-
-    # cast command (deprecated, backwards compatibility)
-    cast_parser = subparsers.add_parser("cast", help="[DEPRECATED] Use 'render' instead")
-    cast_parser.add_argument("input", help="Input .gtext file")
-    cast_parser.add_argument(
-        "-o", "--output", help="Output file (default: auto-detect by stripping .gtext)"
-    )
-    cast_parser.add_argument(
-        "--dry-run", action="store_true", help="Print output to stdout without writing files"
-    )
-    cast_parser.set_defaults(func=cast_command, stdout=False)
-
-    # cast-all command (deprecated, backwards compatibility)
-    cast_all_parser = subparsers.add_parser("cast-all", help="[DEPRECATED] Use 'render-all' instead")
-    cast_all_parser.add_argument(
-        "patterns", nargs="+", help="File patterns to process (supports globs)"
-    )
-    cast_all_parser.set_defaults(func=cast_all_command)
 
     # apikey command
     apikey_parser = subparsers.add_parser("apikey", help="Manage API keys for AI providers")

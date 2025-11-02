@@ -1,5 +1,6 @@
 """Core text processing engine for gtext."""
 
+import re
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -79,11 +80,27 @@ class TextProcessor:
         if context is None:
             context = {}
 
+        # Remove gtext metadata comments before processing
+        content = self._remove_metadata_comments(content)
+
         result = content
         for extension in self.extensions:
             result = extension.process(result, context)
 
         return result
+
+    def _remove_metadata_comments(self, content: str) -> str:
+        """Remove gtext metadata comments from content.
+
+        Args:
+            content: Content that may contain metadata comments
+
+        Returns:
+            Content with metadata comments removed
+        """
+        # Remove <!-- gtext:{...} --> comments
+        pattern = r"<!--\s*gtext:\{.*?\}\s*-->\n?"
+        return re.sub(pattern, "", content, flags=re.DOTALL)
 
     def add_extension(self, extension: BaseExtension) -> None:
         """Add an extension to the processor.

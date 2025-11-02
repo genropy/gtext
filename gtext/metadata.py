@@ -6,7 +6,7 @@ as JSON in HTML comments at the beginning of .gtext source files.
 
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -92,7 +92,7 @@ def add_output(source_path: Path, output_path: Path) -> None:
         output_str = str(output_path.absolute())
 
     # Check if this output already exists
-    timestamp = datetime.utcnow().isoformat() + "Z"
+    timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
     for output in metadata["outputs"]:
         if output["path"] == output_str:
             # Update timestamp

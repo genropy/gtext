@@ -232,20 +232,26 @@ footer.md
 ## 🛠️ CLI Commands
 
 ```bash
-# Expand single file (auto-detect output)
-gtext cast document.md.gtext
+# Render single file (auto-detect output)
+gtext render document.md.gtext
 
 # Explicit output path
-gtext cast document.md.gtext -o output.md
+gtext render document.md.gtext output.md
 
-# Expand all .gtext files in directory
-gtext cast-all docs/**/*.gtext
+# Render to output directory
+gtext render document.md.gtext output/
 
-# Watch mode (auto-regenerate on changes)
-gtext watch docs/**/*.gtext
+# Render multiple files or patterns
+gtext render "docs/**/*.gtext" output/
+
+# Refresh using saved metadata
+gtext refresh document.md.gtext
+
+# Refresh all files with metadata
+gtext refresh
 
 # Dry run (preview without writing)
-gtext cast document.md.gtext --dry-run
+gtext render document.md.gtext --dry-run
 ```
 
 ---
