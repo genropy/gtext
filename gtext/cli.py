@@ -7,7 +7,7 @@ from typing import List, Optional
 
 from gtext import __version__
 from gtext.config import Config
-from gtext.metadata import add_output, get_most_recent_output, get_outputs
+from gtext.metadata import add_output, get_outputs
 from gtext.processor import TextProcessor
 
 
@@ -58,7 +58,11 @@ def render_command(args) -> int:
             output_path_obj = Path(output_arg)
 
             # If single file and output looks like a file, use it as-is
-            if len(input_files) == 1 and '.' in output_path_obj.name and not output_path_obj.is_dir():
+            if (
+                len(input_files) == 1
+                and "." in output_path_obj.name
+                and not output_path_obj.is_dir()
+            ):
                 # Single file to single file
                 pass
             else:
@@ -83,7 +87,11 @@ def render_command(args) -> int:
                     # Determine output path for this file
                     if output_dir:
                         # Output to directory
-                        output_name = input_path.stem if input_path.suffix == '.gtext' else input_path.name
+                        output_name = (
+                            input_path.stem
+                            if input_path.suffix == ".gtext"
+                            else input_path.name
+                        )
                         output_path = output_dir / output_name
                     elif output_arg and len(input_files) == 1:
                         # Single file with explicit output file
@@ -99,7 +107,10 @@ def render_command(args) -> int:
                         actual_output = output_path
                         print(f"✓ Rendered {input_path} → {output_path}")
                     else:
-                        auto_output = str(input_path)[:-6] if str(input_path).endswith(".gtext") else str(input_path)
+                        if str(input_path).endswith(".gtext"):
+                            auto_output = str(input_path)[:-6]
+                        else:
+                            auto_output = str(input_path)
                         actual_output = Path(auto_output)
                         print(f"✓ Rendered {input_path} → {auto_output}")
 
@@ -140,9 +151,14 @@ def refresh_command(args) -> int:
         if hasattr(args, 'sources') and args.sources:
             # Sources specified
             for pattern in args.sources:
-                if '*' in pattern:
+                if "*" in pattern:
                     matches = glob_module.glob(pattern, recursive=True)
-                    input_files.extend([Path(f) for f in matches if Path(f).is_file() and f.endswith('.gtext')])
+                    gtext_files = [
+                        Path(f)
+                        for f in matches
+                        if Path(f).is_file() and f.endswith(".gtext")
+                    ]
+                    input_files.extend(gtext_files)
                 else:
                     path = Path(pattern)
                     if path.is_file() and str(path).endswith('.gtext'):
