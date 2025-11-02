@@ -105,21 +105,21 @@ def render_command(args) -> int:
                     # Determine the actual output path that was used
                     if output_path:
                         actual_output = output_path
-                        print(f"✓ Rendered {input_path} → {output_path}")
+                        print(f"Rendered {input_path} -> {output_path}")
                     else:
                         if str(input_path).endswith(".gtext"):
                             auto_output = str(input_path)[:-6]
                         else:
                             auto_output = str(input_path)
                         actual_output = Path(auto_output)
-                        print(f"✓ Rendered {input_path} → {auto_output}")
+                        print(f"Rendered {input_path} -> {auto_output}")
 
                     # Save metadata (output path) in source file
                     if str(input_path).endswith('.gtext'):
                         add_output(input_path, actual_output)
 
             except Exception as e:
-                print(f"✗ ERROR processing {input_path}: {e}", file=sys.stderr)
+                print(f"ERROR processing {input_path}: {e}", file=sys.stderr)
                 errors += 1
 
         if len(input_files) > 1:
@@ -181,7 +181,7 @@ def refresh_command(args) -> int:
                 outputs = get_outputs(input_path)
 
                 if not outputs:
-                    print(f"⊘ {input_path}: No saved outputs, skipping")
+                    print(f"- {input_path}: No saved outputs, skipping")
                     continue
 
                 # Determine which output to use
@@ -198,7 +198,7 @@ def refresh_command(args) -> int:
                             output_path = input_path.parent / output_path
 
                         processor.process_file(input_path, output_path)
-                        print(f"✓ Refreshed {input_path} → {output_path}")
+                        print(f"Refreshed {input_path} -> {output_path}")
                         refreshed += 1
                     continue
                 else:
@@ -220,7 +220,7 @@ def refresh_command(args) -> int:
                                 output_path = input_path.parent / output_path
 
                             processor.process_file(input_path, output_path)
-                            print(f"✓ Refreshed {input_path} → {output_path}")
+                            print(f"Refreshed {input_path} -> {output_path}")
                             refreshed += 1
                         continue
                     else:
@@ -241,11 +241,11 @@ def refresh_command(args) -> int:
 
                 # Single refresh
                 processor.process_file(input_path, output_path)
-                print(f"✓ Refreshed {input_path} → {output_path}")
+                print(f"Refreshed {input_path} -> {output_path}")
                 refreshed += 1
 
             except Exception as e:
-                print(f"✗ ERROR refreshing {input_path}: {e}", file=sys.stderr)
+                print(f"ERROR refreshing {input_path}: {e}", file=sys.stderr)
                 errors += 1
 
         print(f"\nRefreshed {refreshed} file(s), {errors} error(s)")
@@ -289,7 +289,7 @@ def apikey_command(args) -> int:
             return 1
 
         config.set_api_key(args.provider, args.api_key)
-        print(f"✓ API key for '{args.provider}' saved to ~/.gtext/config.yaml")
+        print(f"API key for '{args.provider}' saved to ~/.gtext/config.yaml")
         return 0
 
     # Subcommand: delete
@@ -300,7 +300,7 @@ def apikey_command(args) -> int:
             return 1
 
         if config.delete_api_key(args.provider):
-            print(f"✓ API key for '{args.provider}' deleted")
+            print(f"API key for '{args.provider}' deleted")
         else:
             print(f"ERROR: No API key found for '{args.provider}'", file=sys.stderr)
             return 1
@@ -308,7 +308,7 @@ def apikey_command(args) -> int:
 
     # Interactive mode (no subcommand)
     else:
-        print("🤖 gtext API Key Manager")
+        print("gtext API Key Manager")
         print()
 
         # Show currently configured providers
@@ -353,7 +353,7 @@ def apikey_command(args) -> int:
         # Save it
         config.set_api_key(provider, api_key)
         print()
-        print(f"✓ API key for '{provider}' saved to ~/.gtext/config.yaml")
+        print(f"API key for '{provider}' saved to ~/.gtext/config.yaml")
         print("  (file permissions set to 600 for security)")
         print()
         print("Test it with:")
