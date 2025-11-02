@@ -1,0 +1,27 @@
+# Protocol Test
+
+## Static (explicit)
+
+```include
+static: header.md
+```
+
+## Static (implicit - backward compatibility)
+
+```include
+footer.md
+```
+
+## CLI
+
+```include
+cli: echo "Hello from CLI"
+```
+
+## Mixed
+
+```include
+static: header.md
+cli: date +"%Y-%m-%d"
+footer.md
+```

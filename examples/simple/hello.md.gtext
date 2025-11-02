@@ -1,0 +1,17 @@
+```include
+header.md
+```
+
+## Introduction
+
+This is a simple example of gtext in action.
+
+## Features
+
+- Include static files
+- Combine multiple sources
+- Generate output automatically
+
+```include
+footer.md
+```

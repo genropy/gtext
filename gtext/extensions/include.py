@@ -12,20 +12,22 @@ from gtext.extensions.base import BaseExtension
 class IncludeExtension(BaseExtension):
     """Extension that processes ```include blocks.
 
-    Supports three types of includes:
-    1. Static files: ```include path/to/file.md ```
-    2. CLI commands: ```include cli: python script.py ```
-    3. Glob patterns: ```include glob: docs/**/*.md ```
+    Supports multiple protocols:
+    - static: Static files (default if no protocol specified)
+    - cli: Execute shell commands
+    - glob: Multiple files via glob patterns
 
-    All three can be mixed in a single block.
+    All protocols can be mixed in a single block.
 
     Example:
         ```include
-        header.md
+        static: header.md
         cli: python get_stats.py
         glob: sections/*.md
         footer.md
         ```
+
+    Backward compatibility: Lines without protocol are treated as static: paths.
     """
 
     name = "include"
@@ -35,6 +37,13 @@ class IncludeExtension(BaseExtension):
         r"```include\s*\n(.*?)```",
         re.DOTALL | re.MULTILINE
     )
+
+    # Protocol handlers
+    PROTOCOLS = {
+        'static': '_handle_static',
+        'cli': '_handle_cli',
+        'glob': '_handle_glob',
+    }
 
     def process(self, content: str, context: Dict) -> str:
         """Process all ```include blocks in the content.
@@ -73,32 +82,51 @@ class IncludeExtension(BaseExtension):
             if not line:
                 continue
 
-            if line.startswith("cli:"):
-                # CLI command
-                cmd = line[4:].strip()
-                results.append(self._execute_cli(cmd))
-            elif line.startswith("glob:"):
-                # Glob pattern
-                pattern = line[5:].strip()
-                results.append(self._resolve_glob(pattern, base_dir))
-            else:
-                # Static file path
-                results.append(self._read_file(line, base_dir))
+            result = self._resolve_line(line, base_dir, context)
+            results.append(result)
 
         return "\n".join(results)
 
-    def _read_file(self, path: str, base_dir: Path) -> str:
-        """Read a static file.
+    def _resolve_line(self, line: str, base_dir: Path, context: Dict) -> str:
+        """Resolve a single include line using protocol handlers.
+
+        Args:
+            line: The include directive line
+            base_dir: Base directory for path resolution
+            context: Context dictionary
+
+        Returns:
+            Resolved content from the line
+        """
+        # Check for protocol prefix
+        if ':' in line:
+            # Try to split protocol:content
+            parts = line.split(':', 1)
+            protocol = parts[0].strip()
+
+            # Check if this is a known protocol
+            if protocol in self.PROTOCOLS:
+                content = parts[1].strip()
+                handler_name = self.PROTOCOLS[protocol]
+                handler = getattr(self, handler_name)
+                return handler(content, base_dir, context)
+
+            # Not a known protocol, treat as path (e.g., C:\path or url:// etc)
+            # Fall through to static handler
+
+        # No protocol or unknown protocol = static file (backward compatibility)
+        return self._handle_static(line, base_dir, context)
+
+    def _handle_static(self, path: str, base_dir: Path, context: Dict) -> str:
+        """Handle static file includes.
 
         Args:
             path: File path (relative or absolute)
             base_dir: Base directory for resolving relative paths
+            context: Context dictionary
 
         Returns:
             File content
-
-        Raises:
-            FileNotFoundError: If file doesn't exist
         """
         file_path = Path(path)
         if not file_path.is_absolute():
@@ -112,11 +140,13 @@ class IncludeExtension(BaseExtension):
         except Exception as e:
             return f"<!-- ERROR reading {path}: {e} -->"
 
-    def _execute_cli(self, command: str) -> str:
-        """Execute a CLI command and return its output.
+    def _handle_cli(self, command: str, base_dir: Path, context: Dict) -> str:
+        """Handle CLI command execution.
 
         Args:
             command: Shell command to execute
+            base_dir: Base directory (for context, not used)
+            context: Context dictionary
 
         Returns:
             Command output (stdout)
@@ -137,12 +167,13 @@ class IncludeExtension(BaseExtension):
         except Exception as e:
             return f"<!-- ERROR executing '{command}': {e} -->"
 
-    def _resolve_glob(self, pattern: str, base_dir: Path) -> str:
-        """Resolve a glob pattern and include all matching files.
+    def _handle_glob(self, pattern: str, base_dir: Path, context: Dict) -> str:
+        """Handle glob pattern matching.
 
         Args:
             pattern: Glob pattern (e.g., "docs/**/*.md")
             base_dir: Base directory for resolving relative patterns
+            context: Context dictionary
 
         Returns:
             Combined content from all matching files
