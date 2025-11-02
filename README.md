@@ -104,6 +104,41 @@ gtext cast report.md.gtext -o report.md
 
 ---
 
+## 📓 Learning with Interactive Tutorials
+
+The best way to learn gtext is through our **hands-on Jupyter notebooks**.
+
+### Run Online (No Installation Required)
+
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/genropy/gtext/main?filepath=notebooks)
+
+Click the badge above to launch an interactive Jupyter environment in your browser. Ready in ~2 minutes!
+
+### Run Locally
+
+```bash
+# 1. Install Jupyter
+pip install jupyter notebook
+
+# 2. Navigate to notebooks directory
+cd notebooks
+
+# 3. Launch Jupyter
+jupyter notebook
+
+# 4. Open 01_rag_prompt_engineering.ipynb and start learning!
+```
+
+### Tutorial Contents
+
+| Notebook | Topic | Duration | Level |
+|----------|-------|----------|-------|
+| 01 - RAG & Prompt Engineering | AI/LLM integration, composable prompts | 30 min | Intermediate |
+
+More tutorials coming soon! See [notebooks/README.md](notebooks/README.md) for the complete learning guide.
+
+---
+
 ## 🎯 Key Features
 
 ### 1. Include Static Files
@@ -247,10 +282,12 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 🌟 About
 
-**gtext** is created and maintained by the **Genro Team** as part of the Genropy ecosystem.
+**gtext** is created by **Giovanni Porcari** with contributions from the Genro Team.
 
-While born from Genro, gtext is:
-- ✅ **Standalone** - No Genro dependencies
+Like a weaverbird 🪶 that masterfully weaves materials together, gtext weaves different content sources into unified documents.
+
+gtext is:
+- ✅ **Standalone** - No dependencies on other frameworks
 - ✅ **Universal** - Works with any text format
 - ✅ **Open** - MIT licensed and community-driven
 

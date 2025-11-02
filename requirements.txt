@@ -1,0 +1,10 @@
+# gtext - The text wizard
+git+https://github.com/genropy/gtext.git
+
+# Jupyter for interactive notebooks
+jupyter>=1.0.0
+notebook>=6.5.0
+
+# Optional: For LLM API examples (not installed by default)
+# openai>=1.0.0
+# anthropic>=0.18.0

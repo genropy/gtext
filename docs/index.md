@@ -105,7 +105,8 @@ Jump to the [Quick Start Guide](quickstart.md) to get started in minutes.
 - **Status**: Alpha (v0.1.0)
 - **Python**: 3.10+
 - **License**: MIT
-- **Maintainer**: Genropy Team
+- **Author**: Giovanni Porcari
+- **Contributors**: Genro Team
 
 ## Community
 
@@ -115,4 +116,6 @@ Jump to the [Quick Start Guide](quickstart.md) to get started in minutes.
 
 ---
 
-**Made with ✨ by the Genro Team**
+**Made with ✨ by Giovanni Porcari**
+
+Like a weaverbird 🪶 that masterfully weaves its nest, gtext weaves together different content sources into unified documents.
