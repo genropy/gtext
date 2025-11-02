@@ -39,8 +39,7 @@ jobs:
         flags: unittests
         name: codecov-${{ matrix.os }}-py${{ matrix.python-version }}
         fail_ci_if_error: false
-      env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ secrets.CODECOV_TOKEN }}  # Optional for public repos
 
   lint:
     runs-on: ubuntu-latest
