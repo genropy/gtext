@@ -343,3 +343,113 @@ def test_expand_modifier_multiple_levels():
         assert "Level 3 content" in result
         # No include blocks should remain
         assert "```include" not in result
+
+
+def test_include_glob_pattern(tmp_path):
+    """Test glob pattern include."""
+    # Create multiple files
+    (tmp_path / "file1.txt").write_text("Content 1")
+    (tmp_path / "file2.txt").write_text("Content 2")
+    (tmp_path / "file3.md").write_text("Content 3")
+    
+    processor = TextProcessor()
+    
+    # Test glob pattern
+    template = f"""```include
+glob: {tmp_path}/*.txt
+```"""
+    
+    result = processor.process_string(template, context={"cwd": tmp_path})
+    
+    assert "Content 1" in result
+    assert "Content 2" in result
+    assert "Content 3" not in result  # .md file should not match
+
+
+def test_include_glob_recursive(tmp_path):
+    """Test recursive glob pattern."""
+    # Create nested structure
+    (tmp_path / "dir1").mkdir()
+    (tmp_path / "dir1" / "file1.txt").write_text("Nested 1")
+    (tmp_path / "dir2").mkdir()
+    (tmp_path / "dir2" / "file2.txt").write_text("Nested 2")
+    
+    processor = TextProcessor()
+    
+    template = f"""```include
+glob: {tmp_path}/**/*.txt
+```"""
+    
+    result = processor.process_string(template, context={"cwd": tmp_path})
+    
+    assert "Nested 1" in result
+    assert "Nested 2" in result
+
+
+def test_include_cli_with_error():
+    """Test CLI command that fails."""
+    processor = TextProcessor()
+    
+    template = """```include
+cli: exit 1
+```"""
+    
+    # Should handle error gracefully
+    result = processor.process_string(template)
+    assert result  # Should return something, not crash
+
+
+def test_include_multiple_protocols():
+    """Test mixing different protocols."""
+    processor = TextProcessor()
+    
+    template = """# Document
+
+```include
+cli: echo "From CLI"
+```
+
+```include
+cli: echo "Another command"
+```"""
+    
+    result = processor.process_string(template)
+    
+    assert "From CLI" in result
+    assert "Another command" in result
+
+
+def test_include_with_whitespace():
+    """Test include with various whitespace."""
+    processor = TextProcessor()
+    
+    template = """```include
+  cli: echo "test"  
+```"""
+    
+    result = processor.process_string(template)
+    assert "test" in result
+
+
+def test_expand_with_glob(tmp_path):
+    """Test expand modifier with glob."""
+    # Create a template file with glob
+    template_file = tmp_path / "template.gtext"
+    (tmp_path / "data1.txt").write_text("Data 1")
+    (tmp_path / "data2.txt").write_text("Data 2")
+    
+    template_file.write_text(f"""```include
+glob: {tmp_path}/data*.txt
+```""")
+    
+    processor = TextProcessor()
+    
+    # Use expand to process the template file
+    main_template = f"""```include
+:expand:static: {template_file}
+```"""
+    
+    result = processor.process_string(main_template, context={"cwd": tmp_path})
+    
+    assert "Data 1" in result
+    assert "Data 2" in result
