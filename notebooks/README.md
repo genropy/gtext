@@ -22,37 +22,63 @@ cd notebooks
 # 3. Launch Jupyter
 jupyter notebook
 
-# 4. Open 01_rag_prompt_engineering.ipynb and start learning!
+# 4. Open 00_getting_started.ipynb and start learning!
 ```
 
 **Note:** Jupyter will open in your browser automatically. Execute cells sequentially with `Shift+Enter`.
 
 ## Tutorial Contents
 
+Follow the learning path from beginner to advanced:
+
 | Notebook | Topic | Duration | Level |
 |----------|-------|----------|-------|
-| 01 - RAG & Prompt Engineering | AI/LLM integration, composable prompts | 30 min | Intermediate |
+| 00 - Getting Started | Basic workflow, file includes, render/refresh | 15 min | Beginner |
+| 01 - CLI Commands & Patterns | Dynamic content, glob patterns, expand modifier | 20 min | Intermediate |
+| 02 - RAG & Prompt Engineering | AI/LLM integration, composable prompts | 30 min | Advanced |
 
-More tutorials coming soon!
+**Recommended Path:** Complete notebooks in order (00 → 01 → 02) for the best learning experience.
 
 ## What You'll Learn
 
-### Notebook 1: RAG & Prompt Engineering
+### Notebook 00: Getting Started
 
-Master the art of creating dynamic, composable prompts for AI applications:
+Master the basics of gtext:
+
+- ✅ Understand source vs output files
+- ✅ Create your first .gtext template
+- ✅ Include static files with `include` blocks
+- ✅ Use `render` and `refresh` commands
+- ✅ Control output locations
+- ✅ Preview with `--dry-run`
+
+**Perfect for:** Anyone new to gtext who wants to understand the fundamentals.
+
+### Notebook 01: CLI Commands & Patterns
+
+Learn dynamic content inclusion:
+
+- ✅ Execute CLI commands and include output
+- ✅ Use glob patterns to include multiple files
+- ✅ Apply `:expand:` modifier for recursive processing
+- ✅ Build automated changelogs and reports
+- ✅ Create reusable template components
+- ✅ Debug templates effectively
+
+**Perfect for:** Developers who want to automate documentation and include live data.
+
+### Notebook 02: RAG & Prompt Engineering
+
+Master AI integration with gtext:
 
 - ✅ Build reusable prompt templates
 - ✅ Include dynamic context (git diffs, code files, recent commits)
-- ✅ Use `:expand:` modifier for nested template processing
+- ✅ Create composable prompt components
 - ✅ Integrate with LLM APIs (OpenAI, Anthropic)
 - ✅ Version prompts in git for reproducibility
 - ✅ Build complete RAG pipelines
 
-**Perfect for:**
-- AI/ML engineers working with LLMs
-- DevOps teams building code review bots
-- Technical writers automating documentation
-- Anyone interested in prompt engineering
+**Perfect for:** AI/ML engineers, DevOps teams building code review bots, and anyone interested in prompt engineering.
 
 ## Prerequisites
 
