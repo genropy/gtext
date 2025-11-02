@@ -1,0 +1,68 @@
+# my_tool - Documentation
+
+> **Note**: This documentation is auto-generated from the CLI help.
+> It stays in sync with code changes automatically! 🔄
+
+## Overview
+
+`my_tool` is a powerful data processing tool for batch operations.
+
+## Installation
+
+```bash
+pip install my_tool
+```
+
+## Command Line Interface
+
+The tool is invoked from the command line as follows:
+
+```
+```include
+cli: python examples/cli-help/my_tool.py --help
+```
+```
+
+## Usage Examples
+
+### Basic Usage
+
+```bash
+# Process a CSV file
+my_tool data.csv
+
+# Convert CSV to JSON
+my_tool data.csv -f json -o output.json
+
+# Convert with verbose output
+my_tool data.csv -f yaml -o output.yaml --verbose
+```
+
+### Advanced Options
+
+```bash
+# Set custom timeout
+my_tool large_file.csv --timeout 120
+
+# Multiple format conversions
+my_tool data.csv -f xml -o data.xml
+my_tool data.json -f csv -o data.csv
+```
+
+## Exit Codes
+
+- `0` - Success
+- `1` - General error
+- `2` - Invalid arguments
+
+## Version History
+
+```
+```include
+cli: python examples/cli-help/my_tool.py --version 2>&1
+```
+```
+
+---
+
+*Documentation generated automatically with [gtext](https://github.com/genropy/gtext)*
