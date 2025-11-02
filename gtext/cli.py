@@ -358,6 +358,51 @@ def apikey_command(args) -> int:
         return 0
 
 
+def serve_command(args) -> int:
+    """Execute the serve command (live preview server).
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code (0 for success, 1 for error)
+    """
+    try:
+        # Check if watchdog is installed
+        try:
+            import watchdog  # noqa: F401
+        except ImportError:
+            print(
+                "ERROR: The 'serve' command requires watchdog. Install with:",
+                file=sys.stderr,
+            )
+            print("  pip install 'gtext[serve]'", file=sys.stderr)
+            return 1
+
+        from gtext.server import PreviewServer
+
+        source_file = Path(args.source)
+
+        if not source_file.exists():
+            print(f"ERROR: File not found: {source_file}", file=sys.stderr)
+            return 1
+
+        if not str(source_file).endswith(".gtext"):
+            print(f"ERROR: File must have .gtext extension: {source_file}", file=sys.stderr)
+            return 1
+
+        # Start server
+        server = PreviewServer(source_file, port=args.port, host=args.host)
+        server.start()
+        server.serve_forever()
+
+        return 0
+
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 1
+
+
 def main(argv: Optional[List[str]] = None) -> int:
     """Main CLI entry point.
 
@@ -444,6 +489,25 @@ def main(argv: Optional[List[str]] = None) -> int:
     apikey_delete_parser.add_argument("provider", help="Provider name")
 
     apikey_parser.set_defaults(func=apikey_command)
+
+    # serve command
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="Start live preview server for a .gtext file",
+        epilog="Examples:\n"
+        "  gtext serve document.md.gtext\n"
+        "  gtext serve document.md.gtext --port 8000\n"
+        "  gtext serve document.md.gtext --host 0.0.0.0",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    serve_parser.add_argument("source", help="Source .gtext file to serve")
+    serve_parser.add_argument(
+        "--port", "-p", type=int, default=8080, help="Port to serve on (default: 8080)"
+    )
+    serve_parser.add_argument(
+        "--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)"
+    )
+    serve_parser.set_defaults(func=serve_command)
 
     # Parse arguments
     args = parser.parse_args(argv)
