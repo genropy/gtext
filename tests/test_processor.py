@@ -450,6 +450,39 @@ glob: {tmp_path}/data*.txt
 ```"""
     
     result = processor.process_string(main_template, context={"cwd": tmp_path})
-    
+
     assert "Data 1" in result
     assert "Data 2" in result
+
+
+def test_processor_custom_extensions():
+    """Test processor with custom extensions list."""
+    from gtext.extensions.include import IncludeExtension
+
+    custom_ext = IncludeExtension()
+    processor = TextProcessor(extensions=[custom_ext])
+
+    assert len(processor.extensions) == 1
+    assert processor.extensions[0] == custom_ext
+
+
+def test_processor_add_extension():
+    """Test adding extension to processor."""
+    from gtext.extensions.include import IncludeExtension
+    from gtext.extensions.base import BaseExtension
+
+    processor = TextProcessor()
+    initial_count = len(processor.extensions)
+
+    # Create a simple custom extension
+    class DummyExtension(BaseExtension):
+        name = "dummy"
+
+        def process(self, content, context):
+            return content + "\n<!-- processed by dummy -->"
+
+    dummy = DummyExtension()
+    processor.add_extension(dummy)
+
+    assert len(processor.extensions) == initial_count + 1
+    assert processor.extensions[-1] == dummy
