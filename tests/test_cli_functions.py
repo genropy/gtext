@@ -466,3 +466,106 @@ def test_serve_command_success():
             mock_server.serve_forever.assert_called_once()
 
             assert result == 0
+
+
+def test_render_command_multiple_files_stdout_separator():
+    """Test render_command with multiple files to stdout shows separator."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        file1 = tmpdir / "test1.md.gtext"
+        file1.write_text("# Test 1")
+
+        file2 = tmpdir / "test2.md.gtext"
+        file2.write_text("# Test 2")
+
+        args = Namespace(
+            inputs=[str(file1), str(file2)],
+            dry_run=False,
+            stdout=True
+        )
+
+        # Capture stdout
+        import io
+        import sys
+        captured = io.StringIO()
+        old_stdout = sys.stdout
+        sys.stdout = captured
+
+        try:
+            result = render_command(args)
+        finally:
+            sys.stdout = old_stdout
+
+        output = captured.getvalue()
+
+        # Should show separator between files (line 85)
+        assert "=" * 60 in output
+        assert result == 0
+
+
+def test_render_command_file_without_gtext_extension():
+    """Test render_command with file that doesn't have .gtext extension."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        # File without .gtext extension
+        source = tmpdir / "test.txt"
+        source.write_text("# Test content")
+
+        args = Namespace(
+            inputs=[str(source)],
+            dry_run=False,
+            stdout=False
+        )
+
+        result = render_command(args)
+
+        assert result == 0
+        # Auto-output should be same as input (line 111)
+        # Output file should exist with same name
+        assert source.exists()
+
+
+def test_render_command_processing_exception():
+    """Test render_command when processor raises exception."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        source = tmpdir / "test.md.gtext"
+        source.write_text("# Test")
+
+        args = Namespace(
+            inputs=[str(source)],
+            dry_run=False,
+            stdout=False
+        )
+
+        # Mock processor to raise exception
+        with patch('gtext.cli.TextProcessor') as mock_processor_class:
+            mock_processor = MagicMock()
+            mock_processor.process_file.side_effect = Exception("Processing error")
+            mock_processor_class.return_value = mock_processor
+
+            result = render_command(args)
+
+            # Should return error code (lines 128-130)
+            assert result == 1
+
+
+def test_render_command_no_matching_files_error():
+    """Test render_command with pattern that matches no files."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+
+        # Pattern that won't match anything
+        args = Namespace(
+            inputs=[str(tmpdir / "*.nonexistent")],
+            dry_run=False,
+            stdout=False
+        )
+
+        result = render_command(args)
+
+        # Should return error code (lines 153-157)
+        assert result == 1
