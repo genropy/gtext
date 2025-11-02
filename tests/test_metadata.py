@@ -1,6 +1,7 @@
 """Tests for metadata management."""
 
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -101,6 +102,9 @@ def test_add_output_updates_timestamp():
         add_output(source, output)
         first_outputs = get_outputs(source)
 
+        # Small delay to ensure different timestamp
+        time.sleep(0.01)
+
         add_output(source, output)
         second_outputs = get_outputs(source)
 
@@ -119,6 +123,10 @@ def test_get_most_recent_output():
 
         # Add outputs
         add_output(source, Path(tmpdir) / "output1.md")
+
+        # Small delay to ensure different timestamp
+        time.sleep(0.01)
+
         add_output(source, Path(tmpdir) / "output2.md")
 
         # Most recent should be output2

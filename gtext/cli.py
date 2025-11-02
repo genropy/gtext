@@ -34,13 +34,13 @@ def render_command(args) -> int:
             last_arg = inputs_list[-1]
             # If last arg doesn't exist or is a directory, treat as output
             last_path = Path(last_arg)
-            if not last_path.exists() or last_path.is_dir() or not last_arg.endswith('.gtext'):
+            if not last_path.exists() or last_path.is_dir() or not last_arg.endswith(".gtext"):
                 output_arg = inputs_list.pop()
 
         # Collect all input files (expand globs)
         input_files = []
         for pattern in inputs_list:
-            if '*' in pattern:
+            if "*" in pattern:
                 # Glob pattern
                 matches = glob_module.glob(pattern, recursive=True)
                 input_files.extend([Path(f) for f in matches if Path(f).is_file()])
@@ -88,9 +88,7 @@ def render_command(args) -> int:
                     if output_dir:
                         # Output to directory
                         output_name = (
-                            input_path.stem
-                            if input_path.suffix == ".gtext"
-                            else input_path.name
+                            input_path.stem if input_path.suffix == ".gtext" else input_path.name
                         )
                         output_path = output_dir / output_name
                     elif output_arg and len(input_files) == 1:
@@ -115,7 +113,7 @@ def render_command(args) -> int:
                         print(f"Rendered {input_path} -> {auto_output}")
 
                     # Save metadata (output path) in source file
-                    if str(input_path).endswith('.gtext'):
+                    if str(input_path).endswith(".gtext"):
                         add_output(input_path, actual_output)
 
             except Exception as e:
@@ -148,24 +146,22 @@ def refresh_command(args) -> int:
 
         # Collect input files
         input_files = []
-        if hasattr(args, 'sources') and args.sources:
+        if hasattr(args, "sources") and args.sources:
             # Sources specified
             for pattern in args.sources:
                 if "*" in pattern:
                     matches = glob_module.glob(pattern, recursive=True)
                     gtext_files = [
-                        Path(f)
-                        for f in matches
-                        if Path(f).is_file() and f.endswith(".gtext")
+                        Path(f) for f in matches if Path(f).is_file() and f.endswith(".gtext")
                     ]
                     input_files.extend(gtext_files)
                 else:
                     path = Path(pattern)
-                    if path.is_file() and str(path).endswith('.gtext'):
+                    if path.is_file() and str(path).endswith(".gtext"):
                         input_files.append(path)
         else:
             # No sources: find all .gtext files in current directory with metadata
-            for gtext_file in Path('.').glob('**/*.gtext'):
+            for gtext_file in Path(".").glob("**/*.gtext"):
                 if get_outputs(gtext_file):
                     input_files.append(gtext_file)
 
@@ -190,7 +186,7 @@ def refresh_command(args) -> int:
                     output_path = Path(outputs[0]["path"])
                     if not output_path.is_absolute():
                         output_path = input_path.parent / output_path
-                elif hasattr(args, 'all') and args.all:
+                elif hasattr(args, "all") and args.all:
                     # Refresh all outputs
                     for output_info in outputs:
                         output_path = Path(output_info["path"])
@@ -210,9 +206,9 @@ def refresh_command(args) -> int:
 
                     choice = input("Refresh which? [1/all/skip] (default=1): ").strip().lower()
 
-                    if choice == 'skip' or choice == 's':
+                    if choice == "skip" or choice == "s":
                         continue
-                    elif choice == 'all' or choice == 'a':
+                    elif choice == "all" or choice == "a":
                         # Refresh all
                         for output_info in outputs:
                             output_path = Path(output_info["path"])
@@ -386,25 +382,23 @@ def main(argv: Optional[List[str]] = None) -> int:
         "render",
         help="Render .gtext template(s) - handles single files, patterns, and multiple inputs",
         epilog="Examples:\n"
-               "  gtext render foo.md.gtext\n"
-               "  gtext render foo.md.gtext output.md\n"
-               "  gtext render foo.md.gtext finaldocs/\n"
-               "  gtext render 'docs/**/*.gtext' finaldocs/\n"
-               "  gtext render file1.gtext file2.gtext output/",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        "  gtext render foo.md.gtext\n"
+        "  gtext render foo.md.gtext output.md\n"
+        "  gtext render foo.md.gtext finaldocs/\n"
+        "  gtext render 'docs/**/*.gtext' finaldocs/\n"
+        "  gtext render file1.gtext file2.gtext output/",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     render_parser.add_argument(
         "inputs",
         nargs="+",
         help="Input .gtext file(s) or pattern(s), optionally followed by output file/directory. "
-             "Last argument is treated as output if it doesn't end with .gtext"
+        "Last argument is treated as output if it doesn't end with .gtext",
     )
     render_parser.add_argument(
         "--stdout", action="store_true", help="Print output to stdout without writing files"
     )
-    render_parser.add_argument(
-        "--dry-run", action="store_true", help="Alias for --stdout"
-    )
+    render_parser.add_argument("--dry-run", action="store_true", help="Alias for --stdout")
     render_parser.set_defaults(func=render_command)
 
     # refresh command
@@ -412,21 +406,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         "refresh",
         help="Re-render .gtext files using saved output paths from metadata",
         epilog="Examples:\n"
-               "  gtext refresh                  # Refresh all .gtext with metadata\n"
-               "  gtext refresh foo.md.gtext      # Refresh specific file\n"
-               "  gtext refresh 'docs/**/*.gtext' # Refresh pattern\n"
-               "  gtext refresh --all             # Refresh all outputs for each file",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        "  gtext refresh                  # Refresh all .gtext with metadata\n"
+        "  gtext refresh foo.md.gtext      # Refresh specific file\n"
+        "  gtext refresh 'docs/**/*.gtext' # Refresh pattern\n"
+        "  gtext refresh --all             # Refresh all outputs for each file",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     refresh_parser.add_argument(
         "sources",
         nargs="*",
-        help="Source .gtext file(s) or pattern(s). If omitted, finds all .gtext with metadata"
+        help="Source .gtext file(s) or pattern(s). If omitted, finds all .gtext with metadata",
     )
     refresh_parser.add_argument(
-        "--all", "-a",
+        "--all",
+        "-a",
         action="store_true",
-        help="Refresh all saved outputs (skip interactive choice for multiple outputs)"
+        help="Refresh all saved outputs (skip interactive choice for multiple outputs)",
     )
     refresh_parser.set_defaults(func=refresh_command)
 
