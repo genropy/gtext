@@ -1,0 +1,59 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e ".[docs]"
+
+    - name: Build documentation
+      run: |
+        mkdocs build --strict
+
+    - name: Upload docs artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: documentation
+        path: site/
+
+  # Optional: Deploy to GitHub Pages
+  # Uncomment if you want to use GitHub Pages instead of ReadTheDocs
+  # deploy-docs:
+  #   runs-on: ubuntu-latest
+  #   needs: build-docs
+  #   if: github.ref == 'refs/heads/main'
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #   - uses: actions/checkout@v4
+  #
+  #   - name: Set up Python
+  #     uses: actions/setup-python@v5
+  #     with:
+  #       python-version: "3.12"
+  #
+  #   - name: Install dependencies
+  #     run: |
+  #       python -m pip install --upgrade pip
+  #       pip install -e ".[docs]"
+  #
+  #   - name: Deploy to GitHub Pages
+  #     run: |
+  #       mkdocs gh-deploy --force
