@@ -17,14 +17,21 @@ class IncludeExtension(BaseExtension):
     - cli: Execute shell commands
     - glob: Multiple files via glob patterns
 
-    All protocols can be mixed in a single block.
+    Supports modifiers (prefix with :modifier:):
+    - expand: Recursively process the included content
 
-    Example:
+    Syntax:
+        protocol: content              # Basic
+        :expand:protocol: content      # With expand modifier
+
+    Examples:
         ```include
-        static: header.md
-        cli: python get_stats.py
-        glob: sections/*.md
-        footer.md
+        static: header.md                      # Include file as-is
+        :expand:static: template.md.gtext      # Include and expand recursively
+        cli: python get_stats.py               # Execute command
+        :expand:cli: python generate_doc.py    # Execute and expand output
+        glob: sections/*.md                    # Include multiple files
+        footer.md                              # Implicit static:
         ```
 
     Backward compatibility: Lines without protocol are treated as static: paths.
@@ -45,6 +52,11 @@ class IncludeExtension(BaseExtension):
         'glob': '_handle_glob',
     }
 
+    # Supported modifiers
+    MODIFIERS = {
+        'expand',  # Recursively expand included content
+    }
+
     def process(self, content: str, context: Dict) -> str:
         """Process all ```include blocks in the content.
 
@@ -55,6 +67,10 @@ class IncludeExtension(BaseExtension):
         Returns:
             Content with all ```include blocks replaced by their resolved content
         """
+        # Initialize depth tracking if not present
+        if 'include_depth' not in context:
+            context['include_depth'] = 0
+
         def replace_include(match):
             include_block = match.group(1).strip()
             return self._resolve_include_block(include_block, context)
@@ -87,8 +103,64 @@ class IncludeExtension(BaseExtension):
 
         return "\n".join(results)
 
+    def _parse_line(self, line: str) -> tuple:
+        """Parse line into (modifiers, protocol, content).
+
+        Syntax: :modifier1:modifier2:protocol: content
+
+        Args:
+            line: Include directive line
+
+        Returns:
+            Tuple of (list of modifiers, protocol name, content)
+
+        Examples:
+            "static: file.md" → ([], 'static', 'file.md')
+            ":expand:cli: date" → (['expand'], 'cli', 'date')
+            ":expand:static: template.gtext" → (['expand'], 'static', 'template.gtext')
+            "file.md" → ([], 'static', 'file.md')
+        """
+        modifiers = []
+        content = line
+
+        # Parse modifiers (lines starting with :)
+        while content.startswith(':'):
+            content = content[1:]  # Remove leading :
+
+            if ':' not in content:
+                # Malformed, treat as static
+                return ([], 'static', line)
+
+            parts = content.split(':', 1)
+            potential_mod = parts[0].strip()
+
+            if potential_mod in self.MODIFIERS:
+                modifiers.append(potential_mod)
+                content = parts[1]
+            elif potential_mod in self.PROTOCOLS:
+                # This is a protocol, not a modifier
+                # Parse as protocol:content
+                protocol = potential_mod
+                actual_content = parts[1].strip()
+                return (modifiers, protocol, actual_content)
+            else:
+                # Unknown modifier, stop parsing
+                break
+
+        # No more modifiers, parse protocol
+        if ':' in content:
+            parts = content.split(':', 1)
+            protocol = parts[0].strip()
+            actual_content = parts[1].strip()
+
+            if protocol in self.PROTOCOLS:
+                return (modifiers, protocol, actual_content)
+
+        # No explicit protocol = static (backward compatibility)
+        return (modifiers, 'static', content.strip())
+
     def _resolve_line(self, line: str, base_dir: Path, context: Dict) -> str:
-        """Resolve a single include line using protocol handlers.
+        """Resolve a single include line using protocol handlers with modifiers support.
 
         Args:
             line: The include directive line
@@ -98,24 +170,66 @@ class IncludeExtension(BaseExtension):
         Returns:
             Resolved content from the line
         """
-        # Check for protocol prefix
-        if ':' in line:
-            # Try to split protocol:content
-            parts = line.split(':', 1)
-            protocol = parts[0].strip()
+        # Parse modifiers, protocol, content
+        modifiers, protocol, content = self._parse_line(line)
 
-            # Check if this is a known protocol
-            if protocol in self.PROTOCOLS:
-                content = parts[1].strip()
-                handler_name = self.PROTOCOLS[protocol]
-                handler = getattr(self, handler_name)
-                return handler(content, base_dir, context)
+        # Get handler
+        if protocol not in self.PROTOCOLS:
+            return f"<!-- ERROR: Unknown protocol '{protocol}' -->"
 
-            # Not a known protocol, treat as path (e.g., C:\path or url:// etc)
-            # Fall through to static handler
+        handler_name = self.PROTOCOLS[protocol]
+        handler = getattr(self, handler_name)
 
-        # No protocol or unknown protocol = static file (backward compatibility)
-        return self._handle_static(line, base_dir, context)
+        # Execute handler
+        result = handler(content, base_dir, context)
+
+        # Apply modifiers
+        if 'expand' in modifiers:
+            # Recursively process the result
+            result = self._expand_content(result, base_dir, context)
+
+        return result
+
+    def _expand_content(self, content: str, base_dir: Path, context: Dict) -> str:
+        """Recursively expand content that may contain ```include blocks.
+
+        Args:
+            content: Content to expand
+            base_dir: Base directory for resolution
+            context: Context dict
+
+        Returns:
+            Expanded content with all ```include blocks resolved
+
+        Note:
+            Tracks recursion depth to prevent infinite loops.
+            Maximum depth is 10 by default (configurable via context['max_include_depth']).
+        """
+        # Check if content has includes
+        if '```include' not in content:
+            return content
+
+        # Check depth to prevent infinite recursion
+        depth = context.get('include_depth', 0)
+        max_depth = context.get('max_include_depth', 10)
+
+        if depth >= max_depth:
+            return f"<!-- ERROR: Max include depth {max_depth} exceeded -->\n{content}"
+
+        # Increment depth
+        context['include_depth'] = depth + 1
+
+        # Process includes in this content
+        def replace_include(match):
+            include_block = match.group(1).strip()
+            return self._resolve_include_block(include_block, context)
+
+        expanded = self.INCLUDE_PATTERN.sub(replace_include, content)
+
+        # Restore depth
+        context['include_depth'] = depth
+
+        return expanded
 
     def _handle_static(self, path: str, base_dir: Path, context: Dict) -> str:
         """Handle static file includes.

@@ -1,0 +1,9 @@
+# Template with Dynamic Content
+
+**Generated on**: ```include
+cli: date +"%Y-%m-%d %H:%M"
+```
+
+## Content
+
+This is a template that contains gtext directives.

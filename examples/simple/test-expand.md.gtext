@@ -1,0 +1,15 @@
+# Test Expand Modifier
+
+## Without expand (shows source)
+
+```include
+static: template.md.gtext
+```
+
+## With expand (processes recursively)
+
+```include
+:expand:static: template.md.gtext
+```
+
+## Done!
