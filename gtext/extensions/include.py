@@ -258,6 +258,7 @@ class IncludeExtension(BaseExtension):
             - ~/.gtext/config.yaml: Persistent API keys (use 'gtext apikey' to configure)
         """
         import os
+
         from gtext.config import Config
 
         # Get configuration
@@ -300,14 +301,23 @@ class IncludeExtension(BaseExtension):
         try:
             import openai
         except ImportError:
-            return "<!-- ERROR: 'openai' package not installed. Install with: pip install openai -->\n" + content
+            error_msg = (
+                "<!-- ERROR: 'openai' package not installed. "
+                "Install with: pip install openai -->\n"
+            )
+            return error_msg + content
 
         try:
             client = openai.OpenAI(api_key=api_key)
+            system_prompt = (
+                "You are a helpful assistant that creates concise summaries. "
+                "Summarize the following content in 3-5 bullet points, "
+                "focusing on key information."
+            )
             response = client.chat.completions.create(
                 model=model,
                 messages=[
-                    {"role": "system", "content": "You are a helpful assistant that creates concise summaries. Summarize the following content in 3-5 bullet points, focusing on key information."},
+                    {"role": "system", "content": system_prompt},
                     {"role": "user", "content": content}
                 ],
                 max_tokens=500,
@@ -332,15 +342,23 @@ class IncludeExtension(BaseExtension):
         try:
             import anthropic
         except ImportError:
-            return "<!-- ERROR: 'anthropic' package not installed. Install with: pip install anthropic -->\n" + content
+            error_msg = (
+                "<!-- ERROR: 'anthropic' package not installed. "
+                "Install with: pip install anthropic -->\n"
+            )
+            return error_msg + content
 
         try:
             client = anthropic.Anthropic(api_key=api_key)
+            user_prompt = (
+                "Please summarize the following content in 3-5 concise bullet points, "
+                f"focusing on key information:\n\n{content}"
+            )
             message = client.messages.create(
                 model=model,
                 max_tokens=500,
                 messages=[
-                    {"role": "user", "content": f"Please summarize the following content in 3-5 concise bullet points, focusing on key information:\n\n{content}"}
+                    {"role": "user", "content": user_prompt}
                 ]
             )
             summary = message.content[0].text

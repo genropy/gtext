@@ -1,6 +1,12 @@
+<div align="center">
+
+<img src="Logo.png" alt="gtext Logo" width="200"/>
+
 # 🪄 gtext
 
 **The text wizard** - Transform text files with pluggable extensions.
+
+</div>
 
 [![PyPI version](https://badge.fury.io/py/gtext.svg)](https://badge.fury.io/py/gtext)
 [![Tests](https://github.com/genropy/gtext/actions/workflows/test.yml/badge.svg)](https://github.com/genropy/gtext/actions/workflows/test.yml)

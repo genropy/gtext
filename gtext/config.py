@@ -1,10 +1,9 @@
 """Configuration management for gtext."""
 
-import os
-import stat
-import yaml
 from pathlib import Path
 from typing import Dict, Optional
+
+import yaml
 
 
 class Config:

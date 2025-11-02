@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import List, Optional
 
 from gtext import __version__
-from gtext.processor import TextProcessor
 from gtext.config import Config
+from gtext.processor import TextProcessor
 
 
 def cast_command(args) -> int:
@@ -272,7 +272,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     apikey_subparsers = apikey_parser.add_subparsers(dest="apikey_action")
 
     # apikey list
-    apikey_list_parser = apikey_subparsers.add_parser(
+    apikey_subparsers.add_parser(
         "list",
         help="List configured providers"
     )
