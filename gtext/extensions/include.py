@@ -40,22 +40,19 @@ class IncludeExtension(BaseExtension):
     name = "include"
 
     # Regex to match ```include blocks
-    INCLUDE_PATTERN = re.compile(
-        r"```include\s*\n(.*?)```",
-        re.DOTALL | re.MULTILINE
-    )
+    INCLUDE_PATTERN = re.compile(r"```include\s*\n(.*?)```", re.DOTALL | re.MULTILINE)
 
     # Protocol handlers
     PROTOCOLS = {
-        'static': '_handle_static',
-        'cli': '_handle_cli',
-        'glob': '_handle_glob',
+        "static": "_handle_static",
+        "cli": "_handle_cli",
+        "glob": "_handle_glob",
     }
 
     # Supported modifiers
     MODIFIERS = {
-        'expand',  # Recursively expand included content
-        'tldr',    # AI-powered summarization
+        "expand",  # Recursively expand included content
+        "tldr",  # AI-powered summarization
     }
 
     def process(self, content: str, context: Dict) -> str:
@@ -69,8 +66,8 @@ class IncludeExtension(BaseExtension):
             Content with all ```include blocks replaced by their resolved content
         """
         # Initialize depth tracking if not present
-        if 'include_depth' not in context:
-            context['include_depth'] = 0
+        if "include_depth" not in context:
+            context["include_depth"] = 0
 
         def replace_include(match):
             include_block = match.group(1).strip()
@@ -125,14 +122,14 @@ class IncludeExtension(BaseExtension):
         content = line
 
         # Parse modifiers (lines starting with :)
-        while content.startswith(':'):
+        while content.startswith(":"):
             content = content[1:]  # Remove leading :
 
-            if ':' not in content:
+            if ":" not in content:
                 # Malformed, treat as static
-                return ([], 'static', line)
+                return ([], "static", line)
 
-            parts = content.split(':', 1)
+            parts = content.split(":", 1)
             potential_mod = parts[0].strip()
 
             if potential_mod in self.MODIFIERS:
@@ -149,8 +146,8 @@ class IncludeExtension(BaseExtension):
                 break
 
         # No more modifiers, parse protocol
-        if ':' in content:
-            parts = content.split(':', 1)
+        if ":" in content:
+            parts = content.split(":", 1)
             protocol = parts[0].strip()
             actual_content = parts[1].strip()
 
@@ -158,7 +155,7 @@ class IncludeExtension(BaseExtension):
                 return (modifiers, protocol, actual_content)
 
         # No explicit protocol = static (backward compatibility)
-        return (modifiers, 'static', content.strip())
+        return (modifiers, "static", content.strip())
 
     def _resolve_line(self, line: str, base_dir: Path, context: Dict) -> str:
         """Resolve a single include line using protocol handlers with modifiers support.
@@ -185,11 +182,11 @@ class IncludeExtension(BaseExtension):
         result = handler(content, base_dir, context)
 
         # Apply modifiers
-        if 'expand' in modifiers:
+        if "expand" in modifiers:
             # Recursively process the result
             result = self._expand_content(result, base_dir, context)
 
-        if 'tldr' in modifiers:
+        if "tldr" in modifiers:
             # AI-powered summarization
             result = self._tldr_content(result, context)
 
@@ -211,18 +208,18 @@ class IncludeExtension(BaseExtension):
             Maximum depth is 10 by default (configurable via context['max_include_depth']).
         """
         # Check if content has includes
-        if '```include' not in content:
+        if "```include" not in content:
             return content
 
         # Check depth to prevent infinite recursion
-        depth = context.get('include_depth', 0)
-        max_depth = context.get('max_include_depth', 10)
+        depth = context.get("include_depth", 0)
+        max_depth = context.get("max_include_depth", 10)
 
         if depth >= max_depth:
             return f"<!-- ERROR: Max include depth {max_depth} exceeded -->\n{content}"
 
         # Increment depth
-        context['include_depth'] = depth + 1
+        context["include_depth"] = depth + 1
 
         # Process includes in this content
         def replace_include(match):
@@ -232,7 +229,7 @@ class IncludeExtension(BaseExtension):
         expanded = self.INCLUDE_PATTERN.sub(replace_include, content)
 
         # Restore depth
-        context['include_depth'] = depth
+        context["include_depth"] = depth
 
         return expanded
 
@@ -262,9 +259,9 @@ class IncludeExtension(BaseExtension):
         from gtext.config import Config
 
         # Get configuration
-        provider = context.get('tldr_provider') or os.getenv('GTEXT_TLDR_PROVIDER', 'mock')
-        model = context.get('tldr_model') or os.getenv('GTEXT_TLDR_MODEL')
-        api_key = context.get('tldr_api_key') or os.getenv('GTEXT_TLDR_API_KEY')
+        provider = context.get("tldr_provider") or os.getenv("GTEXT_TLDR_PROVIDER", "mock")
+        model = context.get("tldr_model") or os.getenv("GTEXT_TLDR_MODEL")
+        api_key = context.get("tldr_api_key") or os.getenv("GTEXT_TLDR_API_KEY")
 
         # Try to get API key from config if not provided
         if not api_key:
@@ -276,11 +273,11 @@ class IncludeExtension(BaseExtension):
             return content  # Too short to summarize
 
         try:
-            if provider == 'openai':
-                return self._tldr_openai(content, model or 'gpt-4o-mini', api_key)
-            elif provider == 'anthropic':
-                return self._tldr_anthropic(content, model or 'claude-3-haiku-20240307', api_key)
-            elif provider == 'mock':
+            if provider == "openai":
+                return self._tldr_openai(content, model or "gpt-4o-mini", api_key)
+            elif provider == "anthropic":
+                return self._tldr_anthropic(content, model or "claude-3-haiku-20240307", api_key)
+            elif provider == "mock":
                 return self._tldr_mock(content)
             else:
                 return f"<!-- ERROR: Unknown tldr provider: {provider} -->\n{content}"
@@ -293,7 +290,7 @@ class IncludeExtension(BaseExtension):
 
         # Get API key
         if not api_key:
-            api_key = os.getenv('OPENAI_API_KEY')
+            api_key = os.getenv("OPENAI_API_KEY")
 
         if not api_key:
             return "<!-- ERROR: OPENAI_API_KEY not set -->\n" + content
@@ -318,10 +315,10 @@ class IncludeExtension(BaseExtension):
                 model=model,
                 messages=[
                     {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": content}
+                    {"role": "user", "content": content},
                 ],
                 max_tokens=500,
-                temperature=0.3
+                temperature=0.3,
             )
             summary = response.choices[0].message.content
             return f"**AI Summary ({model}):**\n\n{summary}\n"
@@ -334,7 +331,7 @@ class IncludeExtension(BaseExtension):
 
         # Get API key
         if not api_key:
-            api_key = os.getenv('ANTHROPIC_API_KEY')
+            api_key = os.getenv("ANTHROPIC_API_KEY")
 
         if not api_key:
             return "<!-- ERROR: ANTHROPIC_API_KEY not set -->\n" + content
@@ -355,11 +352,7 @@ class IncludeExtension(BaseExtension):
                 f"focusing on key information:\n\n{content}"
             )
             message = client.messages.create(
-                model=model,
-                max_tokens=500,
-                messages=[
-                    {"role": "user", "content": user_prompt}
-                ]
+                model=model, max_tokens=500, messages=[{"role": "user", "content": user_prompt}]
             )
             summary = message.content[0].text
             return f"**AI Summary ({model}):**\n\n{summary}\n"
@@ -368,12 +361,12 @@ class IncludeExtension(BaseExtension):
 
     def _tldr_mock(self, content: str) -> str:
         """Mock summarization for testing (no API required)."""
-        lines = content.strip().split('\n')
+        lines = content.strip().split("\n")
         word_count = len(content.split())
         char_count = len(content)
 
         # Create a simple summary
-        first_lines = '\n'.join(lines[:3])
+        first_lines = "\n".join(lines[:3])
         if len(lines) > 3:
             first_lines += f"\n\n[...{len(lines) - 3} more lines...]"
 
@@ -423,13 +416,7 @@ class IncludeExtension(BaseExtension):
             Command output (stdout)
         """
         try:
-            result = subprocess.run(
-                command,
-                shell=True,
-                capture_output=True,
-                text=True,
-                timeout=30
-            )
+            result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=30)
             if result.returncode != 0:
                 return f"<!-- ERROR executing '{command}': {result.stderr} -->"
             return result.stdout

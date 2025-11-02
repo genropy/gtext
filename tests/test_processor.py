@@ -1,5 +1,6 @@
 """Tests for gtext processor."""
 
+import sys
 import tempfile
 from pathlib import Path
 
@@ -143,6 +144,7 @@ glob: {tmpdir}/*.txt
         assert "CLI output" in result
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix commands not available on Windows")
 def test_expand_modifier_static_file():
     """Test :expand: modifier with static file includes."""
     processor = TextProcessor()
@@ -197,6 +199,7 @@ static: {template}
         assert re.search(r'\d{4}-\d{2}-\d{2}', result_expand) is not None
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="Unix commands not available on Windows")
 def test_expand_modifier_cli_command():
     """Test :expand: modifier with CLI command."""
     processor = TextProcessor()

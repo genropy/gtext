@@ -26,7 +26,7 @@ def cast_command(args) -> int:
             # Dry run: print to stdout
             result = processor.process_string(
                 Path(args.input).read_text(encoding="utf-8"),
-                context={"input_path": Path(args.input)}
+                context={"input_path": Path(args.input)},
             )
             print(result)
         else:
@@ -103,7 +103,7 @@ def apikey_command(args) -> int:
     config = Config()
 
     # Subcommand: list
-    if args.apikey_action == 'list':
+    if args.apikey_action == "list":
         providers = config.list_providers()
         if not providers:
             print("No API keys configured.")
@@ -117,7 +117,7 @@ def apikey_command(args) -> int:
         return 0
 
     # Subcommand: set
-    elif args.apikey_action == 'set':
+    elif args.apikey_action == "set":
         if not args.provider or not args.api_key:
             print("ERROR: Both provider and api_key are required", file=sys.stderr)
             print("Usage: gtext apikey set <provider> <key>")
@@ -128,7 +128,7 @@ def apikey_command(args) -> int:
         return 0
 
     # Subcommand: delete
-    elif args.apikey_action == 'delete':
+    elif args.apikey_action == "delete":
         if not args.provider:
             print("ERROR: Provider name required", file=sys.stderr)
             print("Usage: gtext apikey delete <provider>")
@@ -163,19 +163,19 @@ def apikey_command(args) -> int:
         provider_input = input("Enter provider name (or number): ").strip().lower()
 
         # Map number to provider
-        provider_map = {'1': 'openai', '2': 'anthropic'}
+        provider_map = {"1": "openai", "2": "anthropic"}
         provider = provider_map.get(provider_input, provider_input)
 
-        if provider not in ['openai', 'anthropic']:
+        if provider not in ["openai", "anthropic"]:
             print(f"ERROR: Unknown provider '{provider}'", file=sys.stderr)
             print("Supported: openai, anthropic")
             return 1
 
         # Ask for API key
         print()
-        if provider == 'openai':
+        if provider == "openai":
             print("Get your OpenAI API key from: https://platform.openai.com/api-keys")
-        elif provider == 'anthropic':
+        elif provider == "anthropic":
             print("Get your Anthropic API key from: https://console.anthropic.com/")
 
         print()
@@ -209,86 +209,51 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         prog="gtext",
         description="The text wizard - Transform text files with pluggable extensions",
-        epilog="Documentation: https://gtext.readthedocs.io"
+        epilog="Documentation: https://gtext.readthedocs.io",
     )
 
-    parser.add_argument(
-        "--version",
-        action="version",
-        version=f"gtext {__version__}"
-    )
+    parser.add_argument("--version", action="version", version=f"gtext {__version__}")
 
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
 
     # cast command
-    cast_parser = subparsers.add_parser(
-        "cast",
-        help="Process a single .gtext file"
+    cast_parser = subparsers.add_parser("cast", help="Process a single .gtext file")
+    cast_parser.add_argument("input", help="Input .gtext file")
+    cast_parser.add_argument(
+        "-o", "--output", help="Output file (default: auto-detect by stripping .gtext)"
     )
     cast_parser.add_argument(
-        "input",
-        help="Input .gtext file"
-    )
-    cast_parser.add_argument(
-        "-o", "--output",
-        help="Output file (default: auto-detect by stripping .gtext)"
-    )
-    cast_parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print output to stdout without writing files"
+        "--dry-run", action="store_true", help="Print output to stdout without writing files"
     )
     cast_parser.set_defaults(func=cast_command)
 
     # cast-all command
-    cast_all_parser = subparsers.add_parser(
-        "cast-all",
-        help="Process multiple .gtext files"
-    )
+    cast_all_parser = subparsers.add_parser("cast-all", help="Process multiple .gtext files")
     cast_all_parser.add_argument(
-        "patterns",
-        nargs="+",
-        help="File patterns to process (supports globs)"
+        "patterns", nargs="+", help="File patterns to process (supports globs)"
     )
     cast_all_parser.set_defaults(func=cast_all_command)
 
     # watch command (not yet implemented)
-    watch_parser = subparsers.add_parser(
-        "watch",
-        help="Watch files and auto-regenerate on changes"
-    )
-    watch_parser.add_argument(
-        "patterns",
-        nargs="+",
-        help="File patterns to watch"
-    )
+    watch_parser = subparsers.add_parser("watch", help="Watch files and auto-regenerate on changes")
+    watch_parser.add_argument("patterns", nargs="+", help="File patterns to watch")
     watch_parser.set_defaults(func=watch_command)
 
     # apikey command
-    apikey_parser = subparsers.add_parser(
-        "apikey",
-        help="Manage API keys for AI providers"
-    )
+    apikey_parser = subparsers.add_parser("apikey", help="Manage API keys for AI providers")
     apikey_subparsers = apikey_parser.add_subparsers(dest="apikey_action")
 
     # apikey list
-    apikey_subparsers.add_parser(
-        "list",
-        help="List configured providers"
-    )
+    apikey_subparsers.add_parser("list", help="List configured providers")
 
     # apikey set
-    apikey_set_parser = apikey_subparsers.add_parser(
-        "set",
-        help="Set API key for a provider"
-    )
+    apikey_set_parser = apikey_subparsers.add_parser("set", help="Set API key for a provider")
     apikey_set_parser.add_argument("provider", help="Provider name (openai, anthropic)")
     apikey_set_parser.add_argument("api_key", help="API key")
 
     # apikey delete
     apikey_delete_parser = apikey_subparsers.add_parser(
-        "delete",
-        help="Delete API key for a provider"
+        "delete", help="Delete API key for a provider"
     )
     apikey_delete_parser.add_argument("provider", help="Provider name")
 

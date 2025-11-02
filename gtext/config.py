@@ -29,7 +29,7 @@ class Config:
             return {}
 
         try:
-            with open(self.config_file, 'r') as f:
+            with open(self.config_file, "r") as f:
                 config = yaml.safe_load(f) or {}
                 return config
         except Exception as e:
@@ -39,7 +39,7 @@ class Config:
     def _save_config(self, config: Dict):
         """Save configuration to file with secure permissions."""
         # Write config
-        with open(self.config_file, 'w') as f:
+        with open(self.config_file, "w") as f:
             yaml.dump(config, f, default_flow_style=False)
 
         # Set secure permissions (owner read/write only)
@@ -54,10 +54,10 @@ class Config:
         """
         config = self._load_config()
 
-        if 'api_keys' not in config:
-            config['api_keys'] = {}
+        if "api_keys" not in config:
+            config["api_keys"] = {}
 
-        config['api_keys'][provider] = api_key
+        config["api_keys"][provider] = api_key
         self._save_config(config)
 
     def get_api_key(self, provider: str) -> Optional[str]:
@@ -70,7 +70,7 @@ class Config:
             API key or None if not found
         """
         config = self._load_config()
-        return config.get('api_keys', {}).get(provider)
+        return config.get("api_keys", {}).get(provider)
 
     def delete_api_key(self, provider: str) -> bool:
         """Delete API key for a provider.
@@ -83,11 +83,11 @@ class Config:
         """
         config = self._load_config()
 
-        if 'api_keys' not in config:
+        if "api_keys" not in config:
             return False
 
-        if provider in config['api_keys']:
-            del config['api_keys'][provider]
+        if provider in config["api_keys"]:
+            del config["api_keys"][provider]
             self._save_config(config)
             return True
 
@@ -100,7 +100,7 @@ class Config:
             List of provider names
         """
         config = self._load_config()
-        return list(config.get('api_keys', {}).keys())
+        return list(config.get("api_keys", {}).keys())
 
     def get_all_api_keys(self) -> Dict[str, str]:
         """Get all API keys.
@@ -109,4 +109,4 @@ class Config:
             Dictionary of provider -> api_key
         """
         config = self._load_config()
-        return config.get('api_keys', {})
+        return config.get("api_keys", {})
