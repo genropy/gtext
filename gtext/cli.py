@@ -77,20 +77,6 @@ def cast_all_command(args) -> int:
     return 1 if errors > 0 else 0
 
 
-def watch_command(args) -> int:
-    """Execute the watch command (watch for changes).
-
-    Args:
-        args: Parsed command-line arguments
-
-    Returns:
-        Exit code
-    """
-    print("ERROR: Watch mode not yet implemented", file=sys.stderr)
-    print("Suggestion: Use a file watcher like 'watchexec' or 'entr' with gtext cast-all")
-    return 1
-
-
 def apikey_command(args) -> int:
     """Execute the apikey command (manage API keys).
 
@@ -233,11 +219,6 @@ def main(argv: Optional[List[str]] = None) -> int:
         "patterns", nargs="+", help="File patterns to process (supports globs)"
     )
     cast_all_parser.set_defaults(func=cast_all_command)
-
-    # watch command (not yet implemented)
-    watch_parser = subparsers.add_parser("watch", help="Watch files and auto-regenerate on changes")
-    watch_parser.add_argument("patterns", nargs="+", help="File patterns to watch")
-    watch_parser.set_defaults(func=watch_command)
 
     # apikey command
     apikey_parser = subparsers.add_parser("apikey", help="Manage API keys for AI providers")
