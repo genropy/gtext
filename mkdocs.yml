@@ -7,6 +7,8 @@ edit_uri: edit/main/docs/
 
 theme:
   name: material
+  logo: assets/Logo.png
+  favicon: assets/Logo.png
   palette:
     - scheme: default
       primary: deep purple
