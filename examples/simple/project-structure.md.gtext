@@ -1,0 +1,24 @@
+# Project Structure
+
+This documentation is **auto-generated** - always up to date!
+
+## Directory Tree
+
+```include
+cli: find . -maxdepth 2 -not -path '*/\.*' | sed 's|[^/]*/| |g' | sed 's|^ ||'
+```
+
+## All .gtext Files
+
+```include
+cli: find . -name "*.gtext" -type f | sort
+```
+
+## Markdown Files
+
+```include
+cli: ls -1 *.md 2>/dev/null || echo "No .md files"
+```
+
+---
+*Generated automatically by gtext 🪶*

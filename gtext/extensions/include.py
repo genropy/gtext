@@ -55,6 +55,7 @@ class IncludeExtension(BaseExtension):
     # Supported modifiers
     MODIFIERS = {
         'expand',  # Recursively expand included content
+        'tldr',    # AI-powered summarization
     }
 
     def process(self, content: str, context: Dict) -> str:
@@ -188,6 +189,10 @@ class IncludeExtension(BaseExtension):
             # Recursively process the result
             result = self._expand_content(result, base_dir, context)
 
+        if 'tldr' in modifiers:
+            # AI-powered summarization
+            result = self._tldr_content(result, context)
+
         return result
 
     def _expand_content(self, content: str, base_dir: Path, context: Dict) -> str:
@@ -230,6 +235,140 @@ class IncludeExtension(BaseExtension):
         context['include_depth'] = depth
 
         return expanded
+
+    def _tldr_content(self, content: str, context: Dict) -> str:
+        """Generate AI-powered summary of content.
+
+        Args:
+            content: Content to summarize
+            context: Context dict (may contain 'tldr_provider', 'tldr_model', 'tldr_api_key')
+
+        Returns:
+            Summarized content or error message
+
+        Supported providers:
+            - 'openai' (default): OpenAI API (GPT models)
+            - 'anthropic': Anthropic API (Claude models)
+            - 'mock': Mock provider for testing (returns truncated content)
+
+        Configuration via context, config file, or environment variables:
+            - GTEXT_TLDR_PROVIDER: Provider name (default: 'mock')
+            - GTEXT_TLDR_MODEL: Model name (default: provider-specific)
+            - GTEXT_TLDR_API_KEY: API key
+            - ~/.gtext/config.yaml: Persistent API keys (use 'gtext apikey' to configure)
+        """
+        import os
+        from gtext.config import Config
+
+        # Get configuration
+        provider = context.get('tldr_provider') or os.getenv('GTEXT_TLDR_PROVIDER', 'mock')
+        model = context.get('tldr_model') or os.getenv('GTEXT_TLDR_MODEL')
+        api_key = context.get('tldr_api_key') or os.getenv('GTEXT_TLDR_API_KEY')
+
+        # Try to get API key from config if not provided
+        if not api_key:
+            config = Config()
+            api_key = config.get_api_key(provider)
+
+        # Check content length
+        if len(content.strip()) < 100:
+            return content  # Too short to summarize
+
+        try:
+            if provider == 'openai':
+                return self._tldr_openai(content, model or 'gpt-4o-mini', api_key)
+            elif provider == 'anthropic':
+                return self._tldr_anthropic(content, model or 'claude-3-haiku-20240307', api_key)
+            elif provider == 'mock':
+                return self._tldr_mock(content)
+            else:
+                return f"<!-- ERROR: Unknown tldr provider: {provider} -->\n{content}"
+        except Exception as e:
+            return f"<!-- ERROR in tldr: {e} -->\n{content}"
+
+    def _tldr_openai(self, content: str, model: str, api_key: str = None) -> str:
+        """Summarize using OpenAI API."""
+        import os
+
+        # Get API key
+        if not api_key:
+            api_key = os.getenv('OPENAI_API_KEY')
+
+        if not api_key:
+            return "<!-- ERROR: OPENAI_API_KEY not set -->\n" + content
+
+        try:
+            import openai
+        except ImportError:
+            return "<!-- ERROR: 'openai' package not installed. Install with: pip install openai -->\n" + content
+
+        try:
+            client = openai.OpenAI(api_key=api_key)
+            response = client.chat.completions.create(
+                model=model,
+                messages=[
+                    {"role": "system", "content": "You are a helpful assistant that creates concise summaries. Summarize the following content in 3-5 bullet points, focusing on key information."},
+                    {"role": "user", "content": content}
+                ],
+                max_tokens=500,
+                temperature=0.3
+            )
+            summary = response.choices[0].message.content
+            return f"**AI Summary ({model}):**\n\n{summary}\n"
+        except Exception as e:
+            return f"<!-- ERROR calling OpenAI API: {e} -->\n{content}"
+
+    def _tldr_anthropic(self, content: str, model: str, api_key: str = None) -> str:
+        """Summarize using Anthropic API."""
+        import os
+
+        # Get API key
+        if not api_key:
+            api_key = os.getenv('ANTHROPIC_API_KEY')
+
+        if not api_key:
+            return "<!-- ERROR: ANTHROPIC_API_KEY not set -->\n" + content
+
+        try:
+            import anthropic
+        except ImportError:
+            return "<!-- ERROR: 'anthropic' package not installed. Install with: pip install anthropic -->\n" + content
+
+        try:
+            client = anthropic.Anthropic(api_key=api_key)
+            message = client.messages.create(
+                model=model,
+                max_tokens=500,
+                messages=[
+                    {"role": "user", "content": f"Please summarize the following content in 3-5 concise bullet points, focusing on key information:\n\n{content}"}
+                ]
+            )
+            summary = message.content[0].text
+            return f"**AI Summary ({model}):**\n\n{summary}\n"
+        except Exception as e:
+            return f"<!-- ERROR calling Anthropic API: {e} -->\n{content}"
+
+    def _tldr_mock(self, content: str) -> str:
+        """Mock summarization for testing (no API required)."""
+        lines = content.strip().split('\n')
+        word_count = len(content.split())
+        char_count = len(content)
+
+        # Create a simple summary
+        first_lines = '\n'.join(lines[:3])
+        if len(lines) > 3:
+            first_lines += f"\n\n[...{len(lines) - 3} more lines...]"
+
+        return f"""**Mock Summary:**
+
+- Document contains {word_count} words, {char_count} characters
+- {len(lines)} lines total
+- First few lines:
+
+{first_lines}
+
+*This is a mock summary. Set GTEXT_TLDR_PROVIDER=openai or anthropic for AI summaries.*
+"""
 
     def _handle_static(self, path: str, base_dir: Path, context: Dict) -> str:
         """Handle static file includes.

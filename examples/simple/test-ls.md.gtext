@@ -1,0 +1,19 @@
+# Test LS Command
+
+## Files in current directory
+
+```include
+cli: ls -la
+```
+
+## Only .md files
+
+```include
+cli: ls *.md
+```
+
+## Git files
+
+```include
+cli: ls -la | grep git
+```

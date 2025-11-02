@@ -27,7 +27,9 @@ classifiers = [
 ]
 keywords = ["text", "processor", "markdown", "documentation", "plugins", "extensions"]
 
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0",
+]
 
 [project.optional-dependencies]
 dev = [
