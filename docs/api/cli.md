@@ -11,23 +11,23 @@ API documentation for the command-line interface.
 
 ## Command Functions
 
-### cast_command
+### render_command
 
-::: gtext.cli.cast_command
+::: gtext.cli.render_command
     options:
       show_source: true
       heading_level: 3
 
-### cast_all_command
+### refresh_command
 
-::: gtext.cli.cast_all_command
+::: gtext.cli.refresh_command
     options:
       show_source: true
       heading_level: 3
 
-### watch_command
+### apikey_command
 
-::: gtext.cli.watch_command
+::: gtext.cli.apikey_command
     options:
       show_source: true
       heading_level: 3
@@ -109,9 +109,9 @@ def process_directory(directory: str):
     for gtext_file in Path(directory).rglob("*.gtext"):
         try:
             processor.process_file(gtext_file)
-            print(f"✓ {gtext_file}")
+            print(f"Processed {gtext_file}")
         except Exception as e:
-            print(f"✗ {gtext_file}: {e}")
+            print(f"ERROR {gtext_file}: {e}")
 
 process_directory("docs")
 ```
