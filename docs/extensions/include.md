@@ -20,10 +20,39 @@ The Include Extension processes `\`\`\`include` code blocks and replaces them wi
 ```
 ````
 
-Each line can be:
-- A file path (static include)
-- `cli: command` (command output)
-- `glob: pattern` (multiple files)
+Each line can use the following format:
+
+```
+[:modifier:]protocol: content
+```
+
+### Protocols
+
+- `static:` - Include static files (default if no protocol specified)
+- `cli:` - Execute shell commands
+- `glob:` - Include multiple files matching a pattern
+
+### Modifiers
+
+- `:expand:` - Recursively process included content for nested `\`\`\`include` blocks
+
+### Examples
+
+````markdown
+# Basic protocols
+```include
+static: file.md                # Static file (explicit)
+file.md                         # Static file (implicit)
+cli: date                       # Execute command
+glob: docs/*.md                 # Glob pattern
+```
+
+# With expand modifier
+```include
+:expand:static: template.gtext  # Include and recursively expand
+:expand:cli: generate_doc.sh    # Execute and expand output
+```
+````
 
 ## Static File Includes
 
@@ -229,6 +258,280 @@ Processing order:
 4. `date` - executed and output included
 5. `footer.md` - included
 
+## The `:expand:` Modifier
+
+### Overview
+
+By default, when you include a file that contains `\`\`\`include` blocks, those blocks are **not processed** - they remain as source code in the output.
+
+The `:expand:` modifier changes this behavior by **recursively processing** the included content, expanding all nested `\`\`\`include` blocks.
+
+### Use Cases
+
+**Show Source** (default behavior):
+````markdown
+```include
+static: template.gtext
+```
+````
+
+If `template.gtext` contains:
+````markdown
+# Template
+
+Generated: ```include
+cli: date
+```
+````
+
+Output will show the **source**:
+````markdown
+# Template
+
+Generated: ```include
+cli: date
+```
+````
+
+**Expand Content** (with `:expand:` modifier):
+````markdown
+```include
+:expand:static: template.gtext
+```
+````
+
+Output will show **expanded** content:
+````markdown
+# Template
+
+Generated: 2025-11-02
+````
+
+### Syntax
+
+The `:expand:` modifier is placed **before** the protocol:
+
+````markdown
+```include
+:expand:protocol: content
+```
+````
+
+### Examples
+
+#### Static Files
+
+````markdown
+# Include template as source
+```include
+static: template.gtext
+```
+
+# Include and expand template
+```include
+:expand:static: template.gtext
+```
+````
+
+#### CLI Commands
+
+````markdown
+# Execute script, include output as-is
+```include
+cli: python generate_doc.py
+```
+
+# Execute script, expand any includes in output
+```include
+:expand:cli: python generate_doc.py
+```
+````
+
+#### Glob Patterns
+
+````markdown
+# Include all files, show source
+```include
+glob: templates/*.gtext
+```
+
+# Include and expand all files
+```include
+:expand:glob: templates/*.gtext
+```
+````
+
+### Multi-Level Expansion
+
+The `:expand:` modifier works **recursively** across multiple nesting levels:
+
+**File hierarchy:**
+```
+level1.gtext -> includes level2.gtext -> includes level3.txt
+```
+
+**Usage:**
+````markdown
+```include
+:expand:static: level1.gtext
+```
+````
+
+All levels will be fully expanded until reaching static content or reaching the depth limit.
+
+### Depth Limit
+
+To prevent infinite loops (e.g., circular includes), expansion is limited to **10 levels** by default.
+
+If the depth limit is exceeded, an error is inserted:
+```html
+<!-- ERROR: Max include depth 10 exceeded -->
+```
+
+### When to Use `:expand:`
+
+| Use Case | Use `:expand:`? | Reason |
+|----------|----------------|--------|
+| Include template with dynamic content | ✅ Yes | Need to execute CLI commands in template |
+| Include code examples | ❌ No | Want to show source, not execute |
+| Documentation with reusable sections | ✅ Yes | Each section may have includes |
+| Configuration files | ❌ No | Usually want literal content |
+| Generated reports | ✅ Yes | May contain nested data generation |
+
+### Performance Considerations
+
+- **Without `:expand:`**: Single pass, fast
+- **With `:expand:`**: Multiple passes required, slower
+
+Use `:expand:` only when necessary for recursive content generation.
+
+## Future Protocols (Planned)
+
+The following protocols are **planned for future versions** and are not yet implemented. They are designed to integrate with the Genro CLI ecosystem.
+
+### `storage:` Protocol
+
+Access files from mounted storage volumes managed by `genro-cli`:
+
+````markdown
+```include
+storage:myvolume/path/to/file.md
+```
+````
+
+**How it works:**
+- `genro-cli` manages storage volumes (local/remote/cloud)
+- `storage:volume/path` resolves to the actual mounted location
+- Portable across machines - volume name stays the same even if mount point differs
+
+**Example:**
+```bash
+# Add storage volume via genro-cli
+genro storage add myvolume /mnt/shared-docs
+
+# Use in gtext
+```
+
+````markdown
+```include
+storage:myvolume/project/README.md
+```
+````
+
+### `app:` Protocol
+
+Access resources from published applications managed by `genro-cli`:
+
+````markdown
+```include
+app:userdata/export/report.md
+```
+````
+
+**How it works:**
+- `genro-cli` publishes applications with REST/CLI interfaces
+- `app:appname/resource` queries the app for content
+- Apps can generate dynamic content on demand
+
+**Example:**
+```bash
+# Publish app via genro-cli
+genro app publish userdata --cli --rest
+
+# Use in gtext
+```
+
+````markdown
+# Include data from published app
+```include
+app:userdata/export/summary.json
+```
+
+# Execute app command and include output
+```include
+:expand:app:analytics/report
+```
+````
+
+### `db:` Protocol
+
+Query databases registered with `genro-cli`:
+
+````markdown
+```include
+db:mydb/query/latest_stats.sql
+```
+````
+
+**How it works:**
+- `genro-cli` manages database connections
+- `db:dbname/query/name` executes stored query
+- Results formatted as markdown tables
+
+**Example:**
+```bash
+# Register database via genro-cli
+genro db add mydb postgresql://localhost/mydata
+
+# Use in gtext
+```
+
+````markdown
+# Include query results
+```include
+db:mydb/query/sales_summary.sql
+```
+````
+
+### Integration Pattern
+
+All future protocols follow the same pattern:
+
+1. **Register resource** with `genro-cli` (storage, app, or database)
+2. **Reference by name** in gtext files
+3. **genro-cli resolves** the actual location/connection
+4. **Portable** - works across different machines/environments
+
+### Protocol Resolution
+
+When gtext encounters `storage:`, `app:`, or `db:` protocols:
+
+1. Calls `genro-cli query <protocol> <resource>`
+2. `genro-cli` returns the resolved path or content
+3. Content is included normally
+4. Can be combined with `:expand:` modifier
+
+### Benefits
+
+- **Portability**: Volume names instead of absolute paths
+- **Abstraction**: Access resources without knowing physical location
+- **Security**: Controlled access through genro-cli
+- **Dynamic**: Apps and databases provide live data
+
+### Timeline
+
+These protocols will be implemented **after genro-cli is released**. Current work is focused on the core gtext functionality with `static:`, `cli:`, and `glob:` protocols.
+
 ## Context and Paths
 
 ### Path Resolution
@@ -402,12 +705,21 @@ grep "ERROR" document.md  # Check for errors
 
 ## Configuration
 
-Currently, IncludeExtension has no configuration options. Future versions may add:
+### Current Configuration Options
 
-- `timeout`: Customize command timeout
-- `safe_mode`: Disable CLI execution
-- `max_depth`: Limit include depth
+Via context dictionary when processing:
+
+- `max_include_depth`: Maximum recursion depth for `:expand:` (default: 10)
+- `input_path`: Path to the input file for relative path resolution
+
+### Future Configuration Options
+
+Future versions may add:
+
+- `timeout`: Customize command timeout (currently 30 seconds)
+- `safe_mode`: Disable CLI execution entirely
 - `allowed_commands`: Whitelist for CLI commands
+- `allowed_paths`: Restrict file access to specific directories
 
 ## Examples
 
