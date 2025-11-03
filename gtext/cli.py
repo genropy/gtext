@@ -3,7 +3,7 @@
 import argparse
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from gtext import __version__
 from gtext.config import Config
@@ -358,6 +358,143 @@ def apikey_command(args) -> int:
         return 0
 
 
+def _print_rules(protocol: str, rules: List[Dict], scope: str):
+    """Helper to print security rules."""
+    if not rules:
+        print(f"{protocol} rules ({scope}):")
+        print("  (empty)")
+    else:
+        print(f"{protocol} rules ({scope}):")
+        for i, rule in enumerate(rules):
+            pattern = rule["pattern"]
+            action = rule["action"]
+            name = rule.get("name", "")
+
+            action_symbol = "→" if action == "allow" else "✗"
+            rule_str = f"  {i}: {pattern} {action_symbol} {action}"
+            if name:
+                rule_str += f" ({name})"
+            print(rule_str)
+
+
+def config_command(args) -> int:
+    """Execute the config command (manage security policies with ordered rules).
+
+    Args:
+        args: Parsed command-line arguments
+
+    Returns:
+        Exit code
+    """
+    config = Config()
+    use_global = getattr(args, 'global_config', False)
+    project_dir = Path.cwd() if not use_global else None
+
+    # Check if this is config show (no protocol) or protocol-specific action
+    if args.config_action == "show":
+        merged = config.get_merged_security(Path.cwd())
+
+        if getattr(args, 'json', False):
+            import json
+            print(json.dumps(merged, indent=2))
+        else:
+            print("Security configuration (merged: global + project):\n")
+            if not merged:
+                print("  (no rules configured)")
+            for protocol, data in merged.items():
+                rules = data.get("rules", [])
+                _print_rules(protocol, rules, "merged")
+                print()
+        return 0
+
+    # Extract protocol from config_action (e.g., ":cli")
+    protocol = args.config_action
+    if protocol.startswith(":"):
+        protocol = protocol[1:]  # Remove leading ":"
+
+    # Get the actual action from protocol_action
+    action = getattr(args, 'protocol_action', None)
+    if not action:
+        print("ERROR: No action specified", file=sys.stderr)
+        return 1
+
+    # add_rule
+    if action == "add_rule":
+        try:
+            config.add_rule(
+                protocol,
+                args.pattern,
+                args.action,
+                name=getattr(args, 'name', None),
+                project_dir=project_dir,
+                use_global=use_global
+            )
+            scope = "global" if use_global else "project"
+            print(f"✓ Added rule to {protocol} ({scope})\n")
+            # Show updated rules
+            rules = config.list_rules(protocol, project_dir, use_global)
+            _print_rules(protocol, rules, scope)
+            return 0
+        except ValueError as e:
+            print(f"✗ Error: {e}", file=sys.stderr)
+            return 1
+
+    # remove_rule
+    elif action == "remove_rule":
+        if config.remove_rule(protocol, args.identifier, project_dir, use_global):
+            scope = "global" if use_global else "project"
+            print(f"✓ Removed rule from {protocol} ({scope})\n")
+            # Show updated rules
+            rules = config.list_rules(protocol, project_dir, use_global)
+            _print_rules(protocol, rules, scope)
+            return 0
+        else:
+            print(f"✗ Rule not found: {args.identifier}", file=sys.stderr)
+            return 1
+
+    # rule (up/down/top/bottom)
+    elif action == "rule":
+        success, message = config.move_rule(
+            protocol,
+            args.identifier,
+            args.direction,
+            project_dir,
+            use_global
+        )
+        if success:
+            scope = "global" if use_global else "project"
+            print(f"✓ {message}\n")
+            # Show updated rules
+            rules = config.list_rules(protocol, project_dir, use_global)
+            _print_rules(protocol, rules, scope)
+            return 0
+        else:
+            print(f"✗ {message}", file=sys.stderr)
+            return 1
+
+    # list_rules
+    elif action == "list_rules":
+        scope = "global" if use_global else "project"
+        rules = config.list_rules(protocol, project_dir, use_global)
+        _print_rules(protocol, rules, scope)
+        return 0
+
+    # clear_rules
+    elif action == "clear_rules":
+        if config.clear_rules(protocol, project_dir, use_global):
+            scope = "global" if use_global else "project"
+            print(f"✓ Cleared all {protocol} rules ({scope})\n")
+            _print_rules(protocol, [], scope)
+            return 0
+        else:
+            print(f"✗ No rules to clear", file=sys.stderr)
+            return 1
+
+    else:
+        print("ERROR: Unknown action", file=sys.stderr)
+        return 1
+
+
 def serve_command(args) -> int:
     """Execute the serve command (live preview server).
 
@@ -489,6 +626,76 @@ def main(argv: Optional[List[str]] = None) -> int:
     apikey_delete_parser.add_argument("provider", help="Provider name")
 
     apikey_parser.set_defaults(func=apikey_command)
+
+    # config command (ordered security rules)
+    config_parser = subparsers.add_parser(
+        "config", help="Manage security policies (ordered rules)"
+    )
+    config_subparsers = config_parser.add_subparsers(dest="config_action")
+
+    # config show
+    show_parser = config_subparsers.add_parser(
+        "show", help="Show merged security configuration"
+    )
+    show_parser.add_argument(
+        "--json", action="store_true", help="Output as JSON"
+    )
+
+    # Protocol-specific subparsers (for :cli, :static, etc.)
+    # Helper to create protocol subparsers
+    def add_protocol_parser(protocol_name: str, help_text: str):
+        """Add a protocol subparser with common actions."""
+        proto_parser = config_subparsers.add_parser(
+            protocol_name, help=help_text
+        )
+        proto_subparsers = proto_parser.add_subparsers(dest="protocol_action")
+
+        # add_rule
+        add_parser = proto_subparsers.add_parser(
+            "add_rule", help="Add security rule"
+        )
+        add_parser.add_argument("pattern", help="Pattern to match (e.g., 'date', 'git *')")
+        add_parser.add_argument("action", choices=["allow", "deny"], help="Action: allow or deny")
+        add_parser.add_argument("--name", help="Optional rule name")
+        add_parser.add_argument("--global", dest="global_config", action="store_true", help="Add to global config")
+
+        # remove_rule
+        remove_parser = proto_subparsers.add_parser(
+            "remove_rule", help="Remove security rule"
+        )
+        remove_parser.add_argument("identifier", help="Rule index or name")
+        remove_parser.add_argument("--global", dest="global_config", action="store_true", help="Remove from global config")
+
+        # rule (move)
+        rule_parser = proto_subparsers.add_parser(
+            "rule", help="Move security rule"
+        )
+        rule_parser.add_argument("identifier", help="Rule index or name")
+        rule_parser.add_argument("direction", choices=["up", "down", "top", "bottom"], help="Direction to move")
+        rule_parser.add_argument("--global", dest="global_config", action="store_true", help="Move in global config")
+
+        # list_rules
+        list_parser = proto_subparsers.add_parser(
+            "list_rules", help="List security rules"
+        )
+        list_parser.add_argument("--global", dest="global_config", action="store_true", help="List global config")
+
+        # clear_rules
+        clear_parser = proto_subparsers.add_parser(
+            "clear_rules", help="Clear all security rules"
+        )
+        clear_parser.add_argument("--global", dest="global_config", action="store_true", help="Clear global config")
+
+        # Store protocol name for later use
+        proto_parser.set_defaults(protocol=protocol_name)
+        return proto_parser
+
+    # Add protocol parsers
+    add_protocol_parser(":cli", "Manage CLI command security rules")
+    add_protocol_parser(":static", "Manage static file security rules")
+    add_protocol_parser(":glob", "Manage glob pattern security rules")
+
+    config_parser.set_defaults(func=config_command)
 
     # serve command
     serve_parser = subparsers.add_parser(
