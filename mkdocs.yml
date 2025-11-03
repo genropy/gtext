@@ -98,5 +98,6 @@ nav:
       - Contributing: contributing.md
       - Architecture: architecture.md
   - About:
+      - Attribution: attribution.md
       - License: license.md
       - Changelog: changelog.md

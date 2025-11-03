@@ -312,9 +312,33 @@ Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for gui
 
 ---
 
+## 🎖️ Attribution (Optional)
+
+If gtext helps your project, consider showing support:
+
+**Add a badge**:
+```markdown
+[![Made with gtext](https://img.shields.io/badge/made%20with-gtext-7c3aed?style=flat-square&logo=markdown&logoColor=white)](https://github.com/genropy/gtext)
+```
+
+**Preview**: [![Made with gtext](https://img.shields.io/badge/made%20with-gtext-7c3aed?style=flat-square&logo=markdown&logoColor=white)](https://github.com/genropy/gtext)
+
+**Or mention in your docs**:
+```markdown
+*Documentation generated with [gtext](https://github.com/genropy/gtext)*
+```
+
+See [docs/attribution.md](https://gtext.readthedocs.io/en/latest/attribution/) for more options.
+
+⭐ **Star us on GitHub** to show support!
+
+---
+
 ## 📜 License
 
 MIT License - see [LICENSE](LICENSE) for details.
+
+**No attribution required** - but appreciated! 🙏
 
 ---
 
