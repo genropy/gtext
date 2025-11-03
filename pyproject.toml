@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gtext"
-version = "0.2.0"
+version = "0.3.0"
 description = "The text wizard - Transform text files with pluggable extensions"
 authors = [
     {name = "Giovanni Porcari", email = "giovanni.porcari@gmail.com"},
@@ -32,6 +32,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+ai = [
+    "litellm>=1.0.0",
+]
 serve = [
     "watchdog>=3.0.0",
 ]

@@ -271,126 +271,47 @@ class IncludeExtension(BaseExtension):
 
         Args:
             content: Content to summarize
-            context: Context dict (may contain 'tldr_provider', 'tldr_model', 'tldr_api_key')
+            context: Context dict (may contain 'tldr_model', 'tldr_mock')
 
         Returns:
             Summarized content or error message
 
-        Supported providers:
-            - 'openai' (default): OpenAI API (GPT models)
-            - 'anthropic': Anthropic API (Claude models)
-            - 'mock': Mock provider for testing (returns truncated content)
-
-        Configuration via context, config file, or environment variables:
-            - GTEXT_TLDR_PROVIDER: Provider name (default: 'mock')
-            - GTEXT_TLDR_MODEL: Model name (default: provider-specific)
-            - GTEXT_TLDR_API_KEY: API key
-            - ~/.gtext/config.yaml: Persistent API keys (use 'gtext apikey' to configure)
+        Configuration via context or environment variables:
+            - GTEXT_AI_MODEL: Model name (e.g., "gpt-4", "claude-3-sonnet", "ollama/mistral")
+            - OPENAI_API_KEY, ANTHROPIC_API_KEY, etc: Provider API keys
+            - Set tldr_mock=True in context for mock mode (testing)
         """
         import os
+        from gtext import ai
 
-        from gtext.config import Config
-
-        # Get configuration
-        provider = context.get("tldr_provider") or os.getenv("GTEXT_TLDR_PROVIDER", "mock")
-        model = context.get("tldr_model") or os.getenv("GTEXT_TLDR_MODEL")
-        api_key = context.get("tldr_api_key") or os.getenv("GTEXT_TLDR_API_KEY")
-
-        # Try to get API key from config if not provided
-        if not api_key:
-            config = Config()
-            api_key = config.get_api_key(provider)
+        # Check for mock mode
+        if context.get("tldr_mock") or os.getenv("GTEXT_TLDR_MOCK"):
+            return self._tldr_mock(content)
 
         # Check content length
         if len(content.strip()) < 100:
             return content  # Too short to summarize
 
+        # Check if AI is available
+        if not ai.is_ai_available():
+            return (
+                "<!-- ERROR: LiteLLM not installed. "
+                "Install with: pip install 'gtext[ai]' -->\n" + content
+            )
+
+        # Get model from context or use default
+        model = context.get("tldr_model") or os.getenv("GTEXT_AI_MODEL")
+
         try:
-            if provider == "openai":
-                return self._tldr_openai(content, model or "gpt-4o-mini", api_key)
-            elif provider == "anthropic":
-                return self._tldr_anthropic(content, model or "claude-3-haiku-20240307", api_key)
-            elif provider == "mock":
-                return self._tldr_mock(content)
-            else:
-                return f"<!-- ERROR: Unknown tldr provider: {provider} -->\n{content}"
+            summary = ai.summarize(content, model=model)
+            model_used = model or ai.get_default_model() or "unknown"
+            return f"**AI Summary ({model_used}):**\n\n{summary}\n"
+        except ImportError as e:
+            return f"<!-- ERROR: {e} -->\n{content}"
+        except ValueError as e:
+            return f"<!-- ERROR: {e} -->\n{content}"
         except Exception as e:
-            return f"<!-- ERROR in tldr: {e} -->\n{content}"
-
-    def _tldr_openai(self, content: str, model: str, api_key: str = None) -> str:
-        """Summarize using OpenAI API."""
-        import os
-
-        # Get API key
-        if not api_key:
-            api_key = os.getenv("OPENAI_API_KEY")
-
-        if not api_key:
-            return "<!-- ERROR: OPENAI_API_KEY not set -->\n" + content
-
-        try:
-            import openai
-        except ImportError:
-            error_msg = (
-                "<!-- ERROR: 'openai' package not installed. "
-                "Install with: pip install openai -->\n"
-            )
-            return error_msg + content
-
-        try:
-            client = openai.OpenAI(api_key=api_key)
-            system_prompt = (
-                "You are a helpful assistant that creates concise summaries. "
-                "Summarize the following content in 3-5 bullet points, "
-                "focusing on key information."
-            )
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": content},
-                ],
-                max_tokens=500,
-                temperature=0.3,
-            )
-            summary = response.choices[0].message.content
-            return f"**AI Summary ({model}):**\n\n{summary}\n"
-        except Exception as e:
-            return f"<!-- ERROR calling OpenAI API: {e} -->\n{content}"
-
-    def _tldr_anthropic(self, content: str, model: str, api_key: str = None) -> str:
-        """Summarize using Anthropic API."""
-        import os
-
-        # Get API key
-        if not api_key:
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-
-        if not api_key:
-            return "<!-- ERROR: ANTHROPIC_API_KEY not set -->\n" + content
-
-        try:
-            import anthropic
-        except ImportError:
-            error_msg = (
-                "<!-- ERROR: 'anthropic' package not installed. "
-                "Install with: pip install anthropic -->\n"
-            )
-            return error_msg + content
-
-        try:
-            client = anthropic.Anthropic(api_key=api_key)
-            user_prompt = (
-                "Please summarize the following content in 3-5 concise bullet points, "
-                f"focusing on key information:\n\n{content}"
-            )
-            message = client.messages.create(
-                model=model, max_tokens=500, messages=[{"role": "user", "content": user_prompt}]
-            )
-            summary = message.content[0].text
-            return f"**AI Summary ({model}):**\n\n{summary}\n"
-        except Exception as e:
-            return f"<!-- ERROR calling Anthropic API: {e} -->\n{content}"
+            return f"<!-- ERROR in AI summarization: {e} -->\n{content}"
 
     def _tldr_mock(self, content: str) -> str:
         """Mock summarization for testing (no API required)."""
@@ -411,7 +332,7 @@ class IncludeExtension(BaseExtension):
 
 {first_lines}
 
-*This is a mock summary. Set GTEXT_TLDR_PROVIDER=openai or anthropic for AI summaries.*
+*This is a mock summary. For AI summaries: install 'gtext[ai]' and set GTEXT_AI_MODEL (e.g., gpt-4, claude-3-sonnet) with appropriate API key.*
 """
 
     def _translate_content(self, content: str, context: Dict) -> str:
@@ -419,140 +340,49 @@ class IncludeExtension(BaseExtension):
 
         Args:
             content: Content to translate
-            context: Context dict (may contain 'translate_provider', 'translate_model',
-                     'translate_api_key', 'translate_target')
+            context: Context dict (may contain 'translate_model', 'translate_target', 'translate_mock')
 
         Returns:
             Translated content or error message
 
-        Supported providers:
-            - 'openai' (default): OpenAI API (GPT models)
-            - 'anthropic': Anthropic API (Claude models)
-            - 'mock': Mock provider for testing (returns original with prefix)
-
-        Configuration via context, config file, or environment variables:
-            - GTEXT_TRANSLATE_PROVIDER: Provider name (default: 'mock')
-            - GTEXT_TRANSLATE_MODEL: Model name (default: provider-specific)
-            - GTEXT_TRANSLATE_API_KEY: API key
-            - GTEXT_TRANSLATE_TARGET: Target language (default: 'en')
-            - ~/.gtext/config.yaml: Persistent API keys (use 'gtext apikey' to configure)
+        Configuration via context or environment variables:
+            - GTEXT_AI_MODEL: Model name (e.g., "gpt-4", "claude-3-sonnet")
+            - GTEXT_TRANSLATE_TARGET: Target language code (e.g., "it", "fr", "es")
+            - OPENAI_API_KEY, ANTHROPIC_API_KEY, etc: Provider API keys
+            - Set translate_mock=True in context for mock mode (testing)
         """
         import os
+        from gtext import ai
 
-        from gtext.config import Config
-
-        # Get configuration
-        provider = context.get("translate_provider") or os.getenv(
-            "GTEXT_TRANSLATE_PROVIDER", "mock"
-        )
-        model = context.get("translate_model") or os.getenv("GTEXT_TRANSLATE_MODEL")
-        api_key = context.get("translate_api_key") or os.getenv("GTEXT_TRANSLATE_API_KEY")
+        # Get target language
         target_lang = context.get("translate_target") or os.getenv("GTEXT_TRANSLATE_TARGET", "en")
 
-        # Try to get API key from config if not provided
-        if not api_key:
-            config = Config()
-            api_key = config.get_api_key(provider)
+        # Check for mock mode
+        if context.get("translate_mock") or os.getenv("GTEXT_TRANSLATE_MOCK"):
+            return self._translate_mock(content, target_lang)
 
         # Check content length
         if len(content.strip()) < 10:
             return content  # Too short to translate
 
+        # Check if AI is available
+        if not ai.is_ai_available():
+            return (
+                "<!-- ERROR: LiteLLM not installed. "
+                "Install with: pip install 'gtext[ai]' -->\n" + content
+            )
+
+        # Get model from context or use default
+        model = context.get("translate_model") or os.getenv("GTEXT_AI_MODEL")
+
         try:
-            if provider == "openai":
-                return self._translate_openai(content, target_lang, model or "gpt-4o-mini", api_key)
-            elif provider == "anthropic":
-                return self._translate_anthropic(
-                    content, target_lang, model or "claude-3-haiku-20240307", api_key
-                )
-            elif provider == "mock":
-                return self._translate_mock(content, target_lang)
-            else:
-                return f"<!-- ERROR: Unknown translate provider: {provider} -->\n{content}"
+            return ai.translate(content, target_lang, model=model)
+        except ImportError as e:
+            return f"<!-- ERROR: {e} -->\n{content}"
+        except ValueError as e:
+            return f"<!-- ERROR: {e} -->\n{content}"
         except Exception as e:
-            return f"<!-- ERROR in translate: {e} -->\n{content}"
-
-    def _translate_openai(
-        self, content: str, target_lang: str, model: str, api_key: str = None
-    ) -> str:
-        """Translate using OpenAI API."""
-        import os
-
-        # Get API key
-        if not api_key:
-            api_key = os.getenv("OPENAI_API_KEY")
-
-        if not api_key:
-            return "<!-- ERROR: OPENAI_API_KEY not set -->\n" + content
-
-        try:
-            import openai
-        except ImportError:
-            error_msg = (
-                "<!-- ERROR: 'openai' package not installed. "
-                "Install with: pip install openai -->\n"
-            )
-            return error_msg + content
-
-        try:
-            client = openai.OpenAI(api_key=api_key)
-            system_prompt = (
-                f"You are a professional translator. Translate the following text "
-                f"to {target_lang}. Maintain the original formatting, tone, and style. "
-                f"Only provide the translation, no explanations."
-            )
-            response = client.chat.completions.create(
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": content},
-                ],
-                max_tokens=2000,
-                temperature=0.3,
-            )
-            translation = response.choices[0].message.content
-            return translation
-        except Exception as e:
-            return f"<!-- ERROR calling OpenAI API: {e} -->\n{content}"
-
-    def _translate_anthropic(
-        self, content: str, target_lang: str, model: str, api_key: str = None
-    ) -> str:
-        """Translate using Anthropic API."""
-        import os
-
-        # Get API key
-        if not api_key:
-            api_key = os.getenv("ANTHROPIC_API_KEY")
-
-        if not api_key:
-            return "<!-- ERROR: ANTHROPIC_API_KEY not set -->\n" + content
-
-        try:
-            import anthropic
-        except ImportError:
-            error_msg = (
-                "<!-- ERROR: 'anthropic' package not installed. "
-                "Install with: pip install anthropic -->\n"
-            )
-            return error_msg + content
-
-        try:
-            client = anthropic.Anthropic(api_key=api_key)
-            user_prompt = (
-                f"Translate the following text to {target_lang}. "
-                f"Maintain the original formatting, tone, and style. "
-                f"Only provide the translation, no explanations:\n\n{content}"
-            )
-            message = client.messages.create(
-                model=model,
-                max_tokens=2000,
-                messages=[{"role": "user", "content": user_prompt}],
-            )
-            translation = message.content[0].text
-            return translation
-        except Exception as e:
-            return f"<!-- ERROR calling Anthropic API: {e} -->\n{content}"
+            return f"<!-- ERROR in AI translation: {e} -->\n{content}"
 
     def _translate_mock(self, content: str, target_lang: str) -> str:
         """Mock translation for testing (no API required)."""
@@ -561,7 +391,7 @@ class IncludeExtension(BaseExtension):
 {content}
 
 <!-- This is a mock translation (original text preserved). -->
-<!-- Set GTEXT_TRANSLATE_PROVIDER=openai or anthropic for AI translation. -->"""
+<!-- For AI translation: install 'gtext[ai]' and set GTEXT_AI_MODEL with appropriate API key. -->"""
 
     def _handle_static(self, path: str, base_dir: Path, context: Dict) -> str:
         """Handle static file includes.
