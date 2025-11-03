@@ -370,7 +370,7 @@ def _print_rules(protocol: str, rules: List[Dict], scope: str):
             action = rule["action"]
             name = rule.get("name", "")
 
-            action_symbol = "→" if action == "allow" else "✗"
+            action_symbol = "->" if action == "allow" else "X"
             rule_str = f"  {i}: {pattern} {action_symbol} {action}"
             if name:
                 rule_str += f" ({name})"
@@ -431,26 +431,26 @@ def config_command(args) -> int:
                 use_global=use_global,
             )
             scope = "global" if use_global else "project"
-            print(f"✓ Added rule to {protocol} ({scope})\n")
+            print(f"OK: Added rule to {protocol} ({scope})\n")
             # Show updated rules
             rules = config.list_rules(protocol, project_dir, use_global)
             _print_rules(protocol, rules, scope)
             return 0
         except ValueError as e:
-            print(f"✗ Error: {e}", file=sys.stderr)
+            print(f"ERROR: Error: {e}", file=sys.stderr)
             return 1
 
     # remove_rule
     elif action == "remove_rule":
         if config.remove_rule(protocol, args.identifier, project_dir, use_global):
             scope = "global" if use_global else "project"
-            print(f"✓ Removed rule from {protocol} ({scope})\n")
+            print(f"OK: Removed rule from {protocol} ({scope})\n")
             # Show updated rules
             rules = config.list_rules(protocol, project_dir, use_global)
             _print_rules(protocol, rules, scope)
             return 0
         else:
-            print(f"✗ Rule not found: {args.identifier}", file=sys.stderr)
+            print(f"ERROR: Rule not found: {args.identifier}", file=sys.stderr)
             return 1
 
     # rule (up/down/top/bottom)
@@ -460,13 +460,13 @@ def config_command(args) -> int:
         )
         if success:
             scope = "global" if use_global else "project"
-            print(f"✓ {message}\n")
+            print(f"OK: {message}\n")
             # Show updated rules
             rules = config.list_rules(protocol, project_dir, use_global)
             _print_rules(protocol, rules, scope)
             return 0
         else:
-            print(f"✗ {message}", file=sys.stderr)
+            print(f"ERROR: {message}", file=sys.stderr)
             return 1
 
     # list_rules
@@ -480,11 +480,11 @@ def config_command(args) -> int:
     elif action == "clear_rules":
         if config.clear_rules(protocol, project_dir, use_global):
             scope = "global" if use_global else "project"
-            print(f"✓ Cleared all {protocol} rules ({scope})\n")
+            print(f"OK: Cleared all {protocol} rules ({scope})\n")
             _print_rules(protocol, [], scope)
             return 0
         else:
-            print("✗ No rules to clear", file=sys.stderr)
+            print("ERROR: No rules to clear", file=sys.stderr)
             return 1
 
     else:

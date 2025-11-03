@@ -37,8 +37,8 @@ def test_cli_config_add_rule():
     result = run_gtext("config", ":cli", "add_rule", "date", "allow", "--global")
 
     assert result.returncode == 0
-    assert "✓ Added rule to cli" in result.stdout
-    assert "0: date → allow" in result.stdout
+    assert "OK: Added rule to cli" in result.stdout
+    assert "0: date -> allow" in result.stdout
 
 
 def test_cli_config_add_rule_with_name():
@@ -62,7 +62,7 @@ def test_cli_config_list_rules():
 
     assert result.returncode == 0
     assert "cli rules (global)" in result.stdout
-    assert "date → allow" in result.stdout
+    assert "date -> allow" in result.stdout
 
 
 def test_cli_config_remove_rule_by_index():
@@ -75,9 +75,9 @@ def test_cli_config_remove_rule_by_index():
     result = run_gtext("config", ":cli", "remove_rule", "0", "--global")
 
     assert result.returncode == 0
-    assert "✓ Removed rule" in result.stdout
+    assert "OK: Removed rule" in result.stdout
     # Should only show ls now
-    assert "ls → allow" in result.stdout
+    assert "ls -> allow" in result.stdout
     assert "date" not in result.stdout
 
 
@@ -91,7 +91,7 @@ def test_cli_config_remove_rule_by_name():
     result = run_gtext("config", ":cli", "remove_rule", "allow_date", "--global")
 
     assert result.returncode == 0
-    assert "✓ Removed rule" in result.stdout
+    assert "OK: Removed rule" in result.stdout
 
 
 def test_cli_config_move_rule_up():
@@ -104,11 +104,11 @@ def test_cli_config_move_rule_up():
     result = run_gtext("config", ":cli", "rule", "1", "up", "--global")
 
     assert result.returncode == 0
-    assert "✓ Moved rule" in result.stdout
+    assert "OK: Moved rule" in result.stdout
     # Order should be b, a now
     lines = result.stdout.split('\n')
-    b_line = next(i for i, l in enumerate(lines) if 'b → allow' in l)
-    a_line = next(i for i, l in enumerate(lines) if 'a → allow' in l)
+    b_line = next(i for i, l in enumerate(lines) if 'b -> allow' in l)
+    a_line = next(i for i, l in enumerate(lines) if 'a -> allow' in l)
     assert b_line < a_line
 
 
@@ -122,7 +122,7 @@ def test_cli_config_move_rule_down():
     result = run_gtext("config", ":cli", "rule", "0", "down", "--global")
 
     assert result.returncode == 0
-    assert "✓ Moved rule" in result.stdout
+    assert "OK: Moved rule" in result.stdout
 
 
 def test_cli_config_move_rule_top():
@@ -137,7 +137,7 @@ def test_cli_config_move_rule_top():
 
     assert result.returncode == 0
     # c should now be first
-    assert "0: c → allow" in result.stdout
+    assert "0: c -> allow" in result.stdout
 
 
 def test_cli_config_move_rule_bottom():
@@ -152,7 +152,7 @@ def test_cli_config_move_rule_bottom():
 
     assert result.returncode == 0
     # a should now be last
-    assert "2: a → allow" in result.stdout
+    assert "2: a -> allow" in result.stdout
 
 
 def test_cli_config_clear_rules():
@@ -165,7 +165,7 @@ def test_cli_config_clear_rules():
     result = run_gtext("config", ":cli", "clear_rules", "--global")
 
     assert result.returncode == 0
-    assert "✓ Cleared all cli rules" in result.stdout
+    assert "OK: Cleared all cli rules" in result.stdout
     assert "(empty)" in result.stdout
 
 
@@ -180,7 +180,7 @@ def test_cli_config_show():
     assert result.returncode == 0
     assert "Security configuration" in result.stdout
     assert "cli rules" in result.stdout
-    assert "date → allow" in result.stdout
+    assert "date -> allow" in result.stdout
 
 
 def test_cli_config_show_json():
