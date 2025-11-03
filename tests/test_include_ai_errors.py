@@ -59,8 +59,16 @@ def test_tldr_anthropic_missing_key(tmp_path):
         "tldr_provider": "anthropic"
     }
 
-    with patch.dict('os.environ', {}, clear=True):
+    # Remove only ANTHROPIC_API_KEY from environment (preserve HOME for Windows)
+    import os
+    env_backup = os.environ.get('ANTHROPIC_API_KEY')
+    try:
+        if 'ANTHROPIC_API_KEY' in os.environ:
+            del os.environ['ANTHROPIC_API_KEY']
         result = processor.process_string(template, context=context)
+    finally:
+        if env_backup is not None:
+            os.environ['ANTHROPIC_API_KEY'] = env_backup
 
     assert "ERROR: ANTHROPIC_API_KEY not set" in result
 
@@ -148,8 +156,16 @@ def test_translate_anthropic_missing_key(tmp_path):
         "translate_provider": "anthropic"
     }
 
-    with patch.dict('os.environ', {}, clear=True):
+    # Remove only ANTHROPIC_API_KEY from environment (preserve HOME for Windows)
+    import os
+    env_backup = os.environ.get('ANTHROPIC_API_KEY')
+    try:
+        if 'ANTHROPIC_API_KEY' in os.environ:
+            del os.environ['ANTHROPIC_API_KEY']
         result = processor.process_string(template, context=context)
+    finally:
+        if env_backup is not None:
+            os.environ['ANTHROPIC_API_KEY'] = env_backup
 
     assert "ERROR: ANTHROPIC_API_KEY not set" in result
 

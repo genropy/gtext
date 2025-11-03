@@ -161,7 +161,7 @@ def refresh_command(args) -> int:
                         input_files.append(path)
         else:
             # No sources: find all .gtext files in current directory with metadata
-            for gtext_file in Path(".").glob("**/*.gtext"):
+            for gtext_file in Path.cwd().glob("**/*.gtext"):
                 if get_outputs(gtext_file):
                     input_files.append(gtext_file)
 

@@ -227,10 +227,9 @@ def test_get_outputs_with_absolute_path():
         metadata = read_metadata(source)
         stored_path = metadata["outputs"][0]["path"]
 
-        # If it's absolute, it should start with /
+        # Verify that the path is absolute (works on Windows and Unix)
         # This exercises line 144 (return Path(output_str))
-        if Path(stored_path).is_absolute():
-            assert stored_path.startswith("/")
+        assert Path(stored_path).is_absolute()
 
 
 def test_remove_output_absolute_path():
