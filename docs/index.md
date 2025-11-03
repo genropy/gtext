@@ -1,6 +1,12 @@
-# Welcome to gtext
+<div align="center">
+
+<img src="assets/Logo.png" alt="gtext Logo" width="200"/>
+
+# 🪄 gtext
 
 **The text wizard** - Transform text files with pluggable extensions.
+
+</div>
 
 ---
 
