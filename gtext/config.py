@@ -193,7 +193,7 @@ class Config:
         action: str,
         name: Optional[str] = None,
         project_dir: Optional[Path] = None,
-        use_global: bool = False
+        use_global: bool = False,
     ) -> bool:
         """Add security rule.
 
@@ -241,7 +241,7 @@ class Config:
         protocol: str,
         identifier: str,
         project_dir: Optional[Path] = None,
-        use_global: bool = False
+        use_global: bool = False,
     ) -> bool:
         """Remove security rule by index or name.
 
@@ -283,7 +283,7 @@ class Config:
         identifier: str,
         direction: str,
         project_dir: Optional[Path] = None,
-        use_global: bool = False
+        use_global: bool = False,
     ) -> Tuple[bool, str]:
         """Move security rule up/down/top/bottom.
 
@@ -349,10 +349,7 @@ class Config:
         return (True, f"Moved rule {identifier} {direction}")
 
     def list_rules(
-        self,
-        protocol: str,
-        project_dir: Optional[Path] = None,
-        use_global: bool = False
+        self, protocol: str, project_dir: Optional[Path] = None, use_global: bool = False
     ) -> List[Dict]:
         """List security rules for protocol.
 
@@ -369,10 +366,7 @@ class Config:
         return rules
 
     def clear_rules(
-        self,
-        protocol: str,
-        project_dir: Optional[Path] = None,
-        use_global: bool = False
+        self, protocol: str, project_dir: Optional[Path] = None, use_global: bool = False
     ) -> bool:
         """Clear all security rules for protocol.
 
@@ -394,10 +388,7 @@ class Config:
         return True
 
     def is_command_allowed(
-        self,
-        protocol: str,
-        command: str,
-        base_dir: Optional[Path] = None
+        self, protocol: str, command: str, base_dir: Optional[Path] = None
     ) -> Tuple[bool, str]:
         """Check if command is allowed by security rules.
 
@@ -449,7 +440,7 @@ class Config:
                     return (False, reason)
 
             # Check pattern match (with wildcards)
-            if any(c in pattern for c in ['*', '?', '[']):
+            if any(c in pattern for c in ["*", "?", "["]):
                 if fnmatch.fnmatch(command, pattern):
                     if action == "allow":
                         reason = f"Rule #{i}"
