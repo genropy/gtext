@@ -14,15 +14,15 @@ def test_render_with_allowed_command():
     """Test rendering with allowed command."""
     with tempfile.TemporaryDirectory() as tmpdir:
         with patch.object(Path, 'home', return_value=Path(tmpdir)):
-            # Setup security rule
+            # Setup security rule (use python command for cross-platform compatibility)
             config = Config()
-            config.add_rule("cli", "date", "allow", use_global=True)
+            config.add_rule("cli", "python *", "allow", use_global=True)
 
             # Create test file
             test_file = Path(tmpdir) / "test.md.gtext"
             test_file.write_text("""# Test
 ```include
-cli: date
+cli: python -c "print('Hello from test')"
 ```
 """)
 
@@ -30,9 +30,10 @@ cli: date
             processor = TextProcessor()
             result = processor.process_file(test_file)
 
-            # Should contain date output (not error)
+            # Should contain command output (not error)
             assert "ERROR" not in result
             assert "Command blocked" not in result
+            assert "Hello from test" in result
 
 
 def test_render_with_blocked_command():
