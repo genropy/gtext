@@ -13,6 +13,7 @@ def is_ai_available() -> bool:
     """Check if LiteLLM is installed and configured."""
     try:
         import litellm  # noqa: F401
+
         return True
     except ImportError:
         return False
@@ -98,9 +99,7 @@ def call_ai(
     try:
         import litellm
     except ImportError:
-        raise ImportError(
-            "LiteLLM not installed. Install with: pip install 'gtext[ai]'"
-        )
+        raise ImportError("LiteLLM not installed. Install with: pip install 'gtext[ai]'")
 
     # Use default model if not specified
     if not model:
