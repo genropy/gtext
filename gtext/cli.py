@@ -487,7 +487,7 @@ def config_command(args) -> int:
             _print_rules(protocol, [], scope)
             return 0
         else:
-            print(f"✗ No rules to clear", file=sys.stderr)
+            print("✗ No rules to clear", file=sys.stderr)
             return 1
 
     else:
@@ -657,34 +657,46 @@ def main(argv: Optional[List[str]] = None) -> int:
         add_parser.add_argument("pattern", help="Pattern to match (e.g., 'date', 'git *')")
         add_parser.add_argument("action", choices=["allow", "deny"], help="Action: allow or deny")
         add_parser.add_argument("--name", help="Optional rule name")
-        add_parser.add_argument("--global", dest="global_config", action="store_true", help="Add to global config")
+        add_parser.add_argument(
+            "--global", dest="global_config", action="store_true", help="Add to global config"
+        )
 
         # remove_rule
         remove_parser = proto_subparsers.add_parser(
             "remove_rule", help="Remove security rule"
         )
         remove_parser.add_argument("identifier", help="Rule index or name")
-        remove_parser.add_argument("--global", dest="global_config", action="store_true", help="Remove from global config")
+        remove_parser.add_argument(
+            "--global", dest="global_config", action="store_true", help="Remove from global config"
+        )
 
         # rule (move)
         rule_parser = proto_subparsers.add_parser(
             "rule", help="Move security rule"
         )
         rule_parser.add_argument("identifier", help="Rule index or name")
-        rule_parser.add_argument("direction", choices=["up", "down", "top", "bottom"], help="Direction to move")
-        rule_parser.add_argument("--global", dest="global_config", action="store_true", help="Move in global config")
+        rule_parser.add_argument(
+            "direction", choices=["up", "down", "top", "bottom"], help="Direction to move"
+        )
+        rule_parser.add_argument(
+            "--global", dest="global_config", action="store_true", help="Move in global config"
+        )
 
         # list_rules
         list_parser = proto_subparsers.add_parser(
             "list_rules", help="List security rules"
         )
-        list_parser.add_argument("--global", dest="global_config", action="store_true", help="List global config")
+        list_parser.add_argument(
+            "--global", dest="global_config", action="store_true", help="List global config"
+        )
 
         # clear_rules
         clear_parser = proto_subparsers.add_parser(
             "clear_rules", help="Clear all security rules"
         )
-        clear_parser.add_argument("--global", dest="global_config", action="store_true", help="Clear global config")
+        clear_parser.add_argument(
+            "--global", dest="global_config", action="store_true", help="Clear global config"
+        )
 
         # Store protocol name for later use
         proto_parser.set_defaults(protocol=protocol_name)

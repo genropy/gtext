@@ -5,10 +5,10 @@ Manages two types of configuration:
 2. Security policies: ~/.config/gtext/config.json + .gtext/config.json (shared via git)
 """
 
-from pathlib import Path
-from typing import Dict, Optional, Tuple, List
-import json
 import fnmatch
+import json
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import yaml
 
@@ -126,7 +126,9 @@ class Config:
 
     # ==================== Security Policies Management ====================
 
-    def _get_security_path(self, project_dir: Optional[Path] = None, use_global: bool = False) -> Path:
+    def _get_security_path(
+        self, project_dir: Optional[Path] = None, use_global: bool = False
+    ) -> Path:
         """Get security config file path."""
         if use_global or not project_dir:
             return self.security_file
@@ -146,7 +148,9 @@ class Config:
             print(f"Warning: Could not load security config from {config_path}: {e}")
             return {}
 
-    def _save_security(self, config: Dict, project_dir: Optional[Path] = None, use_global: bool = False):
+    def _save_security(
+        self, config: Dict, project_dir: Optional[Path] = None, use_global: bool = False
+    ):
         """Save security configuration to JSON file."""
         config_path = self._get_security_path(project_dir, use_global)
         config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -212,8 +216,8 @@ class Config:
             raise ValueError(f"Invalid action: {action}. Must be 'allow' or 'deny'")
 
         # Validate pattern (no shell metacharacters except wildcards)
-        DANGEROUS = [";", "|", "&", "$", "`", "\n", "\r", "&&", "||", ">", "<"]
-        if any(c in pattern for c in DANGEROUS):
+        dangerous = [";", "|", "&", "$", "`", "\n", "\r", "&&", "||", ">", "<"]
+        if any(c in pattern for c in dangerous):
             raise ValueError(f"Pattern contains dangerous characters: {pattern}")
 
         config = self._load_security(project_dir, use_global)
@@ -413,8 +417,8 @@ class Config:
             Tuple of (allowed: bool, reason: str)
         """
         # Check shell metacharacters (always blocked)
-        DANGEROUS = [";", "|", "&", "$", "`", "\n", "\r", "&&", "||", ">", "<"]
-        if any(c in command for c in DANGEROUS):
+        dangerous = [";", "|", "&", "$", "`", "\n", "\r", "&&", "||", ">", "<"]
+        if any(c in command for c in dangerous):
             return (False, "Contains dangerous shell metacharacters")
 
         config = self.get_merged_security(base_dir)
