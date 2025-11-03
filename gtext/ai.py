@@ -6,7 +6,7 @@ with a consistent API.
 """
 
 import os
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional
 
 
 def is_ai_available() -> bool:

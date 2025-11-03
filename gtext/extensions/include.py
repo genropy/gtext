@@ -282,6 +282,7 @@ class IncludeExtension(BaseExtension):
             - Set tldr_mock=True in context for mock mode (testing)
         """
         import os
+
         from gtext import ai
 
         # Check for mock mode
@@ -332,7 +333,8 @@ class IncludeExtension(BaseExtension):
 
 {first_lines}
 
-*This is a mock summary. For AI summaries: install 'gtext[ai]' and set GTEXT_AI_MODEL (e.g., gpt-4, claude-3-sonnet) with appropriate API key.*
+*This is a mock summary. For AI summaries: install 'gtext[ai]'
+and set GTEXT_AI_MODEL (e.g., gpt-4, claude-3-sonnet) with appropriate API key.*
 """
 
     def _translate_content(self, content: str, context: Dict) -> str:
@@ -340,7 +342,8 @@ class IncludeExtension(BaseExtension):
 
         Args:
             content: Content to translate
-            context: Context dict (may contain 'translate_model', 'translate_target', 'translate_mock')
+            context: Context dict (may contain 'translate_model',
+                     'translate_target', 'translate_mock')
 
         Returns:
             Translated content or error message
@@ -352,6 +355,7 @@ class IncludeExtension(BaseExtension):
             - Set translate_mock=True in context for mock mode (testing)
         """
         import os
+
         from gtext import ai
 
         # Get target language
