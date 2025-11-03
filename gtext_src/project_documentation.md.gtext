@@ -1,0 +1,48 @@
+<!-- gtext:{"outputs":[{"path":"../PROJECT_DOCUMENTATION.md","timestamp":"2025-11-03T06:00:00Z"}]} -->
+# gtext - Complete Project Documentation
+
+**Auto-generated**: This document aggregates multiple documentation sections.
+
+---
+
+## Overview
+
+```include
+overview.md.gtext
+```
+
+---
+
+## Architecture
+
+```include
+architecture.md.gtext
+```
+
+---
+
+## Installation
+
+```include
+../docs/installation.md
+```
+
+---
+
+## Quick Start
+
+```include
+../docs/quickstart.md
+```
+
+---
+
+## Contributing
+
+```include
+../docs/contributing.md
+```
+
+---
+
+**📝 Auto-generated with gtext** - The text wizard 🪄

@@ -1,0 +1,32 @@
+<!-- gtext:{"outputs":[{"path":"../docs/overview.md","timestamp":"2025-11-03T06:00:00Z"}]} -->
+# gtext - Project Overview
+
+**Project**: gtext
+**Repository**: https://github.com/genropy/gtext
+**Status**: Alpha (v0.2.0)
+**Python**: 3.10+
+
+## Description
+
+gtext is a **universal text processor** with a pluggable extension system. Transform any text file through customizable plugins.
+
+## Key Features
+
+- 📝 **Include files** (static, dynamic, glob patterns)
+- 🤖 **AI processing** (summarization, translation)
+- 💻 **Code generation** (headers, boilerplate)
+- ✅ **Validation** (links, spelling)
+- 🔄 **Extensible** plugin architecture
+
+## Use Cases
+
+- **Documentation**: Living docs that update from real data
+- **Code Management**: License headers, boilerplate injection
+- **Reporting**: Dynamic reports with live queries
+- **Content Management**: Reusable content blocks
+
+## Links
+
+- Documentation: https://gtext.readthedocs.io/
+- PyPI: https://pypi.org/project/gtext/
+- Issues: https://github.com/genropy/gtext/issues

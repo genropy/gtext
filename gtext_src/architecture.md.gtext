@@ -1,0 +1,56 @@
+<!-- gtext:{"outputs":[{"path":"../docs/architecture.md","timestamp":"2025-11-03T06:00:00Z"}]} -->
+# gtext - Architecture
+
+## Overview
+
+gtext uses a **pluggable architecture** with three main components:
+
+1. **TextProcessor** - Core processing engine
+2. **Extensions** - Pluggable transformation modules
+3. **CLI** - Command-line interface
+
+## Components
+
+### TextProcessor
+
+The processor orchestrates the transformation pipeline:
+- Reads source files (`.gtext` extension)
+- Applies extensions in order
+- Generates output files
+
+### Extension System
+
+Extensions implement the `BaseExtension` interface:
+
+```python
+class BaseExtension:
+    name: str
+
+    def process(self, content: str, context: dict) -> str:
+        # Transformation logic
+        return transformed_content
+```
+
+**Built-in extensions**:
+- `IncludeExtension` - File inclusion with multiple modes (static, cli, glob)
+
+### CLI Commands
+
+- `render` - Process files and generate output
+- `refresh` - Re-render using saved metadata
+- `serve` - Live preview server with auto-reload
+
+## Data Flow
+
+```
+.gtext file → TextProcessor → Extensions → Output file
+                    ↓
+              Metadata storage (<!-- gtext:{...} -->)
+```
+
+## Design Principles
+
+- **Zero dependencies** for core functionality
+- **Type-safe** with full type hints
+- **Testable** with 80%+ coverage
+- **Extensible** through simple plugin interface
