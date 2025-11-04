@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 from typing import Dict
 
+from gtext.config import Config
 from gtext.extensions.base import BaseExtension
 
 
@@ -196,6 +197,12 @@ class IncludeExtension(BaseExtension):
 
         handler_name = self.PROTOCOLS[protocol]
         handler = getattr(self, handler_name)
+
+        # Security check: verify command is allowed
+        config = Config()
+        allowed, reason = config.is_command_allowed(protocol, content, base_dir)
+        if not allowed:
+            return f"<!-- ERROR: Command blocked by security policy: {reason} -->"
 
         # Execute handler
         result = handler(content, base_dir, context)

@@ -201,6 +201,67 @@ footer.md
 
 ---
 
+## 🔐 Security
+
+gtext implements a **secure-by-default** policy for all includes and command executions. Everything is **denied unless explicitly allowed** through configurable rules.
+
+### Quick Security Setup
+
+```bash
+# Allow safe read-only commands (global)
+gtext config :cli add_rule "date" allow --global
+gtext config :cli add_rule "git status" allow --global
+gtext config :cli add_rule "ls*" allow --global
+
+# Allow markdown file includes
+gtext config :static add_rule "*.md" allow --global
+
+# Block dangerous commands (explicitly deny)
+gtext config :cli add_rule "rm *" deny --global
+
+# View your security configuration
+gtext config show
+```
+
+### Key Security Features
+
+- **🛡️ Secure by Default**: Nothing runs without explicit permission
+- **📋 Ordered Rules**: First-match wins pattern (like firewall rules)
+- **🎯 Protocol-Specific**: Independent rules for `cli:`, `static:`, `glob:` protocols
+- **🌍 Global & Project**: System-wide rules + project-specific overrides
+- **⚠️ Dangerous Characters**: Metacharacters (`;`, `&`, `|`, `$`) always blocked
+
+### Rule Evaluation (First-Match Wins)
+
+Rules are checked **in order** and stop at the first match:
+
+```
+Configuration:
+0: git push* → deny      # Block pushes
+1: git * → allow         # Allow other git commands
+
+Command: git push        → DENIED by rule 0 (stops here)
+Command: git status      → ALLOWED by rule 1
+```
+
+**Critical**: Order matters! Put specific rules before general ones.
+
+### Documentation
+
+**New to gtext security?** Start here: **[QUICKSTART-SECURITY.md](QUICKSTART-SECURITY.md)** (5-minute guide)
+
+Full security documentation: **[SECURITY.md](SECURITY.md)**
+
+Topics covered:
+- Complete CLI command reference
+- Rule management (add, remove, reorder)
+- Pattern matching with wildcards
+- Global vs project configuration
+- Best practices and examples
+- Troubleshooting guide
+
+---
+
 ## 📚 Use Cases
 
 ### Documentation
@@ -230,6 +291,8 @@ footer.md
 ---
 
 ## 🛠️ CLI Commands
+
+### Rendering & Processing
 
 ```bash
 # Render single file (auto-detect output)
@@ -262,6 +325,35 @@ gtext serve document.md.gtext --port 8000
 ```bash
 pip install 'gtext[serve]'
 ```
+
+### Security Configuration
+
+```bash
+# View security configuration
+gtext config show                           # Merged (global + project)
+gtext config show --json                    # JSON format
+gtext config :cli list_rules --global       # List global rules
+
+# Add security rules
+gtext config :cli add_rule "date" allow --global
+gtext config :cli add_rule "git *" allow --name "allow_git" --global
+gtext config :static add_rule "*.md" allow
+
+# Remove rules (by index or name)
+gtext config :cli remove_rule 0 --global
+gtext config :cli remove_rule "allow_git" --global
+
+# Reorder rules (critical for first-match evaluation!)
+gtext config :cli rule 2 up --global        # Move rule up
+gtext config :cli rule 0 down --global      # Move rule down
+gtext config :cli rule 3 top --global       # Move to top
+gtext config :cli rule 0 bottom --global    # Move to bottom
+
+# Clear all rules for a protocol
+gtext config :cli clear_rules --global
+```
+
+See **[SECURITY.md](SECURITY.md)** for complete documentation.
 
 ---
 

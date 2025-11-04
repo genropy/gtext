@@ -147,8 +147,9 @@ static: {bad_path}
 def test_cli_command_nonzero_exit(tmp_path):
     """Test CLI command with non-zero exit code."""
     processor = TextProcessor()
+    # Use false command which exits with 1 (no dangerous characters)
     template = """```include
-cli: python -c "import sys; sys.exit(1)"
+cli: false
 ```"""
 
     result = processor.process_string(template, context={"cwd": tmp_path})
