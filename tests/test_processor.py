@@ -38,7 +38,7 @@ def test_process_string_with_static_include():
 
         # Create source file
         source = tmpdir / "source.md.gtext"
-        source.write_text(f"# Test\n\n```include\n{included}\n```")
+        source.write_text(f"# Test\n\n```include\nstatic: {included}\n```")
 
         # Process
         result = processor.process_file(source)
@@ -281,7 +281,7 @@ def test_expand_modifier_parsing():
         (":expand:static: file.md", (['expand'], 'static', 'file.md')),
         (":expand:cli: echo hello", (['expand'], 'cli', 'echo hello')),
         ("cli: date", ([], 'cli', 'date')),
-        ("file.md", ([], 'static', 'file.md')),  # Backward compat
+        ("file.md", ([], 'unknown', 'file.md')),  # No implicit protocol (static: now mandatory)
         (":expand:glob: *.txt", (['expand'], 'glob', '*.txt')),
     ]
 
@@ -316,7 +316,7 @@ def test_expand_modifier_multiple_levels():
         level2 = tmpdir / "level2.gtext"
         level2.write_text(f"""Level 2:
 ```include
-{level3}
+static: {level3}
 ```""")
 
         # Create level 1 (includes level 2 with expand)

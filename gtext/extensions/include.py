@@ -174,8 +174,8 @@ class IncludeExtension(BaseExtension):
             if protocol in self.PROTOCOLS:
                 return (modifiers, protocol, actual_content)
 
-        # No explicit protocol = static (backward compatibility)
-        return (modifiers, "static", content.strip())
+        # No explicit protocol = error (static: is now mandatory)
+        return (modifiers, "unknown", content.strip())
 
     def _resolve_line(self, line: str, base_dir: Path, context: Dict) -> str:
         """Resolve a single include line using protocol handlers with modifiers support.

@@ -359,8 +359,8 @@ def test_expand_modifier_max_depth_exceeded(tmp_path):
     assert "ERROR: Max include depth" in result or "```include" in result
 
 
-def test_modifier_without_protocol_uses_static(tmp_path):
-    """Test modifier without explicit protocol defaults to static."""
+def test_modifier_without_protocol_errors(tmp_path):
+    """Test modifier without explicit protocol generates error (static: is now mandatory)."""
     content_file = tmp_path / "test.txt"
     content_file.write_text("Test content here.")
 
@@ -372,5 +372,6 @@ def test_modifier_without_protocol_uses_static(tmp_path):
 
     result = processor.process_string(template, context={"cwd": tmp_path})
 
-    # Should treat as :expand:static:
-    assert "Test content here" in result
+    # Should generate error (no implicit fallback to static:)
+    assert "ERROR" in result
+    assert "Unknown protocol" in result
