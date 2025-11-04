@@ -13,17 +13,21 @@ from gtext.extensions.base import BaseExtension
 class IncludeExtension(BaseExtension):
     """Extension that processes ```include blocks.
 
-    Supports multiple protocols:
-    - static: Static files (default if no protocol specified)
+    Supports two types of commands:
+
+    Source commands (fetch data):
+    - static: Static files (must be explicit)
     - cli: Execute shell commands
     - glob: Multiple files via glob patterns
 
-    Supports modifiers (prefix with :modifier:):
-    - expand: Recursively process the included content
+    Transform commands (process content):
+    - expand: Recursively process the included content (will be renamed to 'render')
+    - tldr: AI-powered summarization
+    - translate: AI-powered translation
 
     Syntax:
-        protocol: content              # Basic
-        :expand:protocol: content      # With expand modifier
+        source_command: content                    # Basic
+        :transform_command:source_command: content # With transform
 
     Examples:
         ```include
@@ -32,10 +36,9 @@ class IncludeExtension(BaseExtension):
         cli: python get_stats.py               # Execute command
         :expand:cli: python generate_doc.py    # Execute and expand output
         glob: sections/*.md                    # Include multiple files
-        footer.md                              # Implicit static:
         ```
 
-    Backward compatibility: Lines without protocol are treated as static: paths.
+    Note: static: is now mandatory (no implicit fallback)
     """
 
     name = "include"
@@ -43,16 +46,16 @@ class IncludeExtension(BaseExtension):
     # Regex to match ```include blocks
     INCLUDE_PATTERN = re.compile(r"```include\s*\n(.*?)```", re.DOTALL | re.MULTILINE)
 
-    # Protocol handlers
-    PROTOCOLS = {
+    # Source commands (fetch data, require handlers)
+    SOURCE_COMMANDS = {
         "static": "_handle_static",
         "cli": "_handle_cli",
         "glob": "_handle_glob",
     }
 
-    # Supported modifiers
-    MODIFIERS = {
-        "expand",  # Recursively expand included content
+    # Transform commands (transform content, applied as pipeline)
+    TRANSFORM_COMMANDS = {
+        "expand",  # Recursively expand included content (will be renamed to 'render')
         "tldr",  # AI-powered summarization
         "translate",  # AI-powered translation
     }
@@ -104,29 +107,29 @@ class IncludeExtension(BaseExtension):
         return "\n".join(results)
 
     def _parse_line(self, line: str) -> tuple:
-        """Parse line into (modifiers, protocol, content).
+        """Parse line into (transforms, source_command, content).
 
-        Syntax: :modifier1[params]:modifier2:protocol: content
+        Syntax: :transform1[params]:transform2:source_command: content
 
         Args:
             line: Include directive line
 
         Returns:
-            Tuple of (list of modifier_specs, protocol name, content)
-            where modifier_specs can be:
-            - string: modifier name without parameters
-            - tuple: (modifier_name, params_dict) with parameters
+            Tuple of (list of transform_specs, source_command name, content)
+            where transform_specs can be:
+            - string: transform name without parameters
+            - tuple: (transform_name, params_dict) with parameters
 
         Examples:
             "static: file.md" → ([], 'static', 'file.md')
             ":expand:cli: date" → (['expand'], 'cli', 'date')
             ":translate[it]:static: file.md" → ([('translate', {'lang': 'it'}], 'static', 'file.md')
-            "file.md" → ([], 'static', 'file.md')
+            "file.md" → ([], 'unknown', 'file.md')  # Error: static: now mandatory
         """
-        modifiers = []
+        modifiers = []  # Will contain transform commands
         content = line
 
-        # Parse modifiers (lines starting with :)
+        # Parse transforms (lines starting with :)
         while content.startswith(":"):
             content = content[1:]  # Remove leading :
 
@@ -149,36 +152,36 @@ class IncludeExtension(BaseExtension):
                 # For now, simple format: single parameter is the target language
                 mod_params = {"lang": params_str.strip()}
 
-            if mod_name in self.MODIFIERS:
+            if mod_name in self.TRANSFORM_COMMANDS:
                 if mod_params:
                     modifiers.append((mod_name, mod_params))
                 else:
                     modifiers.append(mod_name)
                 content = parts[1]
-            elif mod_name in self.PROTOCOLS:
-                # This is a protocol, not a modifier
-                # Parse as protocol:content
+            elif mod_name in self.SOURCE_COMMANDS:
+                # This is a source command, not a transform
+                # Parse as source_command:content
                 protocol = mod_name
                 actual_content = parts[1].strip()
                 return (modifiers, protocol, actual_content)
             else:
-                # Unknown modifier, stop parsing
+                # Unknown command, stop parsing
                 break
 
-        # No more modifiers, parse protocol
+        # No more transforms, parse source command
         if ":" in content:
             parts = content.split(":", 1)
             protocol = parts[0].strip()
             actual_content = parts[1].strip()
 
-            if protocol in self.PROTOCOLS:
+            if protocol in self.SOURCE_COMMANDS:
                 return (modifiers, protocol, actual_content)
 
         # No explicit protocol = error (static: is now mandatory)
         return (modifiers, "unknown", content.strip())
 
     def _resolve_line(self, line: str, base_dir: Path, context: Dict) -> str:
-        """Resolve a single include line using protocol handlers with modifiers support.
+        """Resolve a single include line using source command handlers with transform support.
 
         Args:
             line: The include directive line
@@ -188,14 +191,14 @@ class IncludeExtension(BaseExtension):
         Returns:
             Resolved content from the line
         """
-        # Parse modifiers, protocol, content
+        # Parse transforms, source command, content
         modifiers, protocol, content = self._parse_line(line)
 
         # Get handler
-        if protocol not in self.PROTOCOLS:
-            return f"<!-- ERROR: Unknown protocol '{protocol}' -->"
+        if protocol not in self.SOURCE_COMMANDS:
+            return f"<!-- ERROR: Unknown command '{protocol}' -->"
 
-        handler_name = self.PROTOCOLS[protocol]
+        handler_name = self.SOURCE_COMMANDS[protocol]
         handler = getattr(self, handler_name)
 
         # Security check: verify command is allowed
@@ -207,9 +210,9 @@ class IncludeExtension(BaseExtension):
         # Execute handler
         result = handler(content, base_dir, context)
 
-        # Apply modifiers
+        # Apply transform commands
         for modifier in modifiers:
-            # Handle both string modifiers and (name, params) tuples
+            # Handle both string transforms and (name, params) tuples
             if isinstance(modifier, tuple):
                 mod_name, mod_params = modifier
             else:
@@ -224,7 +227,7 @@ class IncludeExtension(BaseExtension):
                 result = self._tldr_content(result, context)
             elif mod_name == "translate":
                 # AI-powered translation
-                # Merge modifier params into context
+                # Merge transform params into context
                 translate_context = context.copy()
                 if "lang" in mod_params:
                     translate_context["translate_target"] = mod_params["lang"]

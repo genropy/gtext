@@ -374,4 +374,4 @@ def test_modifier_without_protocol_errors(tmp_path):
 
     # Should generate error (no implicit fallback to static:)
     assert "ERROR" in result
-    assert "Unknown protocol" in result
+    assert "Unknown command" in result
