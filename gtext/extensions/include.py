@@ -21,7 +21,7 @@ class IncludeExtension(BaseExtension):
     - glob: Multiple files via glob patterns
 
     Transform commands (process content):
-    - expand: Recursively process the included content (will be renamed to 'render')
+    - render: Recursively process the included content
     - tldr: AI-powered summarization
     - translate: AI-powered translation
 
@@ -32,9 +32,9 @@ class IncludeExtension(BaseExtension):
     Examples:
         ```include
         static: header.md                      # Include file as-is
-        :expand:static: template.md.gtext      # Include and expand recursively
+        :render:static: template.md.gtext      # Include and render recursively
         cli: python get_stats.py               # Execute command
-        :expand:cli: python generate_doc.py    # Execute and expand output
+        :render:cli: python generate_doc.py    # Execute and render output
         glob: sections/*.md                    # Include multiple files
         ```
 
@@ -55,7 +55,7 @@ class IncludeExtension(BaseExtension):
 
     # Transform commands (transform content, applied as pipeline)
     TRANSFORM_COMMANDS = {
-        "expand",  # Recursively expand included content (will be renamed to 'render')
+        "render",  # Recursively process included content (renamed from 'expand')
         "tldr",  # AI-powered summarization
         "translate",  # AI-powered translation
     }
@@ -122,7 +122,7 @@ class IncludeExtension(BaseExtension):
 
         Examples:
             "static: file.md" → ([], 'static', 'file.md')
-            ":expand:cli: date" → (['expand'], 'cli', 'date')
+            ":render:cli: date" → (['render'], 'cli', 'date')
             ":translate[it]:static: file.md" → ([('translate', {'lang': 'it'}], 'static', 'file.md')
             "file.md" → ([], 'unknown', 'file.md')  # Error: static: now mandatory
         """
@@ -219,9 +219,9 @@ class IncludeExtension(BaseExtension):
                 mod_name = modifier
                 mod_params = {}
 
-            if mod_name == "expand":
+            if mod_name == "render":
                 # Recursively process the result
-                result = self._expand_content(result, base_dir, context)
+                result = self._render_content(result, base_dir, context)
             elif mod_name == "tldr":
                 # AI-powered summarization
                 result = self._tldr_content(result, context)
@@ -235,16 +235,16 @@ class IncludeExtension(BaseExtension):
 
         return result
 
-    def _expand_content(self, content: str, base_dir: Path, context: Dict) -> str:
-        """Recursively expand content that may contain ```include blocks.
+    def _render_content(self, content: str, base_dir: Path, context: Dict) -> str:
+        """Recursively render content that may contain ```include blocks.
 
         Args:
-            content: Content to expand
+            content: Content to render
             base_dir: Base directory for resolution
             context: Context dict
 
         Returns:
-            Expanded content with all ```include blocks resolved
+            Rendered content with all ```include blocks resolved
 
         Note:
             Tracks recursion depth to prevent infinite loops.
@@ -269,12 +269,12 @@ class IncludeExtension(BaseExtension):
             include_block = match.group(1).strip()
             return self._resolve_include_block(include_block, context)
 
-        expanded = self.INCLUDE_PATTERN.sub(replace_include, content)
+        rendered = self.INCLUDE_PATTERN.sub(replace_include, content)
 
         # Restore depth
         context["include_depth"] = depth
 
-        return expanded
+        return rendered
 
     def _tldr_content(self, content: str, context: Dict) -> str:
         """Generate AI-powered summary of content.
