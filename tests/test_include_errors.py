@@ -307,7 +307,7 @@ def test_multiple_modifiers_chained(tmp_path):
 
 
 def test_expand_modifier_with_nested_includes(tmp_path):
-    """Test :expand: modifier processes nested includes."""
+    """Test :render: modifier processes nested includes."""
     # Create nested structure
     inner_file = tmp_path / "inner.txt"
     inner_file.write_text("Inner content")
@@ -321,7 +321,7 @@ static: {inner_file}
 
     processor = TextProcessor()
     template = f"""```include
-:expand:static: {outer_file}
+:render:static: {outer_file}
 ```"""
 
     result = processor.process_string(template, context={"cwd": tmp_path})
@@ -332,7 +332,7 @@ static: {inner_file}
 
 
 def test_expand_modifier_max_depth_exceeded(tmp_path):
-    """Test :expand: respects max_include_depth."""
+    """Test :render: respects max_include_depth."""
     # Create files with nested includes
     file3 = tmp_path / "file3.md"
     file3.write_text("Deep content")
@@ -345,7 +345,7 @@ def test_expand_modifier_max_depth_exceeded(tmp_path):
 
     processor = TextProcessor()
     template = f"""```include
-:expand:static: {file1}
+:render:static: {file1}
 ```"""
 
     context = {
@@ -359,18 +359,19 @@ def test_expand_modifier_max_depth_exceeded(tmp_path):
     assert "ERROR: Max include depth" in result or "```include" in result
 
 
-def test_modifier_without_protocol_uses_static(tmp_path):
-    """Test modifier without explicit protocol defaults to static."""
+def test_modifier_without_protocol_errors(tmp_path):
+    """Test modifier without explicit protocol generates error (static: is now mandatory)."""
     content_file = tmp_path / "test.txt"
     content_file.write_text("Test content here.")
 
     processor = TextProcessor()
-    # No protocol specified after :expand:
+    # No protocol specified after :render:
     template = f"""```include
-:expand:{content_file}
+:render:{content_file}
 ```"""
 
     result = processor.process_string(template, context={"cwd": tmp_path})
 
-    # Should treat as :expand:static:
-    assert "Test content here" in result
+    # Should generate error (no implicit fallback to static:)
+    assert "ERROR" in result
+    assert "Unknown command" in result

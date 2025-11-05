@@ -17,6 +17,9 @@
 
 ---
 
+> 🐦 **Part of the [We-Birds](https://github.com/genropy/we-birds) family**
+> *Developer tools that fly together*
+
 ## ✨ What is gtext?
 
 gtext is a **universal text processor** with a pluggable extension system. Transform any text file through customizable plugins:

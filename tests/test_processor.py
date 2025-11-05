@@ -38,7 +38,7 @@ def test_process_string_with_static_include():
 
         # Create source file
         source = tmpdir / "source.md.gtext"
-        source.write_text(f"# Test\n\n```include\n{included}\n```")
+        source.write_text(f"# Test\n\n```include\nstatic: {included}\n```")
 
         # Process
         result = processor.process_file(source)
@@ -146,7 +146,7 @@ glob: {tmpdir}/*.txt
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix commands not available on Windows")
 def test_expand_modifier_static_file():
-    """Test :expand: modifier with static file includes."""
+    """Test :render: modifier with static file includes."""
     processor = TextProcessor()
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -180,7 +180,7 @@ static: {template}
 ## With expand:
 
 ```include
-:expand:static: {template}
+:render:static: {template}
 ```
 """)
 
@@ -201,7 +201,7 @@ static: {template}
 
 @pytest.mark.skipif(sys.platform == "win32", reason="Unix commands not available on Windows")
 def test_expand_modifier_cli_command():
-    """Test :expand: modifier with CLI command."""
+    """Test :render: modifier with CLI command."""
     processor = TextProcessor()
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -223,7 +223,7 @@ echo '```'
         source.write_text(f"""# Test
 
 ```include
-:expand:cli: {script}
+:render:cli: {script}
 ```
 """)
 
@@ -247,7 +247,7 @@ def test_expand_modifier_depth_limit():
         recursive.write_text(f"""# Recursive
 
 ```include
-:expand:static: {recursive}
+:render:static: {recursive}
 ```
 """)
 
@@ -255,7 +255,7 @@ def test_expand_modifier_depth_limit():
         source.write_text(f"""# Test
 
 ```include
-:expand:static: {recursive}
+:render:static: {recursive}
 ```
 """)
 
@@ -278,11 +278,11 @@ def test_expand_modifier_parsing():
     # Test various parsing scenarios
     test_cases = [
         ("static: file.md", ([], 'static', 'file.md')),
-        (":expand:static: file.md", (['expand'], 'static', 'file.md')),
-        (":expand:cli: echo hello", (['expand'], 'cli', 'echo hello')),
+        (":render:static: file.md", (['render'], 'static', 'file.md')),
+        (":render:cli: echo hello", (['render'], 'cli', 'echo hello')),
         ("cli: date", ([], 'cli', 'date')),
-        ("file.md", ([], 'static', 'file.md')),  # Backward compat
-        (":expand:glob: *.txt", (['expand'], 'glob', '*.txt')),
+        ("file.md", ([], 'unknown', 'file.md')),  # No implicit protocol (static: now mandatory)
+        (":render:glob: *.txt", (['render'], 'glob', '*.txt')),
     ]
 
     for line, expected in test_cases:
@@ -291,13 +291,13 @@ def test_expand_modifier_parsing():
 
 
 def test_expand_content_no_includes():
-    """Test that expand_content returns unchanged content if no includes present."""
+    """Test that render_content returns unchanged content if no includes present."""
     from gtext.extensions.include import IncludeExtension
 
     ext = IncludeExtension()
     content = "# Simple content\n\nNo includes here."
 
-    result = ext._expand_content(content, Path.cwd(), {})
+    result = ext._render_content(content, Path.cwd(), {})
     assert result == content
 
 
@@ -316,14 +316,14 @@ def test_expand_modifier_multiple_levels():
         level2 = tmpdir / "level2.gtext"
         level2.write_text(f"""Level 2:
 ```include
-{level3}
+static: {level3}
 ```""")
 
         # Create level 1 (includes level 2 with expand)
         level1 = tmpdir / "level1.gtext"
         level1.write_text(f"""Level 1:
 ```include
-:expand:static: {level2}
+:render:static: {level2}
 ```""")
 
         # Create source (includes level 1 with expand)
@@ -331,7 +331,7 @@ def test_expand_modifier_multiple_levels():
         source.write_text(f"""# Multi-level Test
 
 ```include
-:expand:static: {level1}
+:render:static: {level1}
 ```
 """)
 
@@ -446,7 +446,7 @@ glob: {tmp_path}/data*.txt
     
     # Use expand to process the template file
     main_template = f"""```include
-:expand:static: {template_file}
+:render:static: {template_file}
 ```"""
     
     result = processor.process_string(main_template, context={"cwd": tmp_path})
