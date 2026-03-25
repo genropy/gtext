@@ -33,7 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 ai = [
-    "litellm>=1.0.0",
+    "litellm<=1.80.13",
 ]
 serve = [
     "watchdog>=3.0.0",
