@@ -94,6 +94,38 @@ gtext cast document.gtext --dry-run
 
 ## Project-Specific Guidelines
 
+### Testing Before Push
+
+**MANDATORY**: Always run local tests before pushing to avoid CI failures.
+
+**Quick command**:
+```bash
+./scripts/test-local.sh
+```
+
+**What it tests**:
+- ✅ Ruff lint (`ruff check gtext/`)
+- ✅ Black formatting (`black --check gtext/`)
+- ✅ Pytest with coverage
+- ⚠️ Mypy type checking (non-blocking)
+
+**What it CANNOT test**:
+- ❌ Windows-specific issues (we're on macOS)
+
+**Manual run** (if script fails):
+```bash
+# Individual commands
+ruff check gtext/
+black --check gtext/
+pytest --cov=gtext --cov-report=term-missing
+mypy gtext/  # Optional, errors won't fail
+```
+
+**Auto-fix formatting** (if black check fails):
+```bash
+black gtext/
+```
+
 ### When Adding Extensions
 
 1. Create new file in `gtext/extensions/`
